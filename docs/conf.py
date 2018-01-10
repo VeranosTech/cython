@@ -60,10 +60,10 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = 'index_ko'
 
 # General information about the project.
-project = 'Cython'
+project = '싸이선(Cython)'
 authors = 'Stefan Behnel, Robert Bradshaw, Dag Sverre Seljebotn, Greg Ewing, William Stein, Gabriel Gellner, et al.'
 copyright = '%s, %s' % (YEAR, authors)
 
