@@ -11,11 +11,11 @@ Python(x,y)([Pythonxy]_), and Sage([Sage]_)와 같은
 파이썬과 달리 싸이선은 C 컴파일러가 시스템에 있어야 한다.
 C 컴파일러를 설치하는 법은 사용하는 시스템마다 다르다.:
 
- - **리눅스(Linux)**에는 GNU C 컴파일러(gcc)가 있거나 쉽게 설치할 수 있다.
-   예를 들어 우분투나 데이안에서는``sudo apt-get install build-essential`` 명령으로
+ - **리눅스(Linux)**\ 에는 GNU C 컴파일러(gcc)가 있거나 쉽게 설치할 수 있다.
+   예를 들어 우분투나 데이안에서는 ``sudo apt-get install build-essential`` 명령으로
    필요한 것을 모두 설치할 수 있다.
 
- - **맥(Mac) OS X**에서는 애플 XCode를 설치한다.
+ - **맥(Mac) OS X**\ 에서는 애플 XCode를 설치한다.
    XCode는 맥 OS X's 설치 DVD나 http://developer.apple.com\ 에서 구할 수 있다.
 
  - **윈도우(Windows)** 가장 인기있는 방식은 오픈소스 MinGW(a

@@ -11,7 +11,7 @@ Contents:
    special_methods
    sharing_declarations
    external_C_code
-   source_files_and_compilation
+   source_files_and_compilation_ko
    early_binding_for_speed
    wrapping_CPlusPlus
    fusedtypes
