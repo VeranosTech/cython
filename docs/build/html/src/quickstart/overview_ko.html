@@ -1,0 +1,188 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>싸이선(Cython) 개요 &#8212; 싸이선(Cython) 0.28a0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.28a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="싸이선(Cython) 설치" href="install_ko.html" />
+    <link rel="prev" title="시작하기" href="index_ko.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="install_ko.html" title="싸이선(Cython) 설치"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="index_ko.html" title="시작하기"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index_ko.html" accesskey="U">시작하기</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cython">
+<h1>싸이선(Cython) 개요<a class="headerlink" href="#cython" title="Permalink to this headline">¶</a></h1>
+<p>싸이선([Cython])은 파이썬 언어용 C 확장 모듈을 만들기 위한 프로그래밍 언어이다.
+객체지향, 함수형, 동적 타입 프로그래밍을 지원하는 고수준 언어인
+파이썬(<a class="reference internal" href="#python" id="id1">[Python]</a>)의 상위집합이 되는 것을 목표로 한다.
+주 기능은 언어의 일부로 정적 타입 선언을 추가할 수 있도록
+지원하는 것이다.
+소스코드는 최적화된 C/C++ 코드로 자동 변환된 후 다시 파이썬 확장 모듈로 컴파일된다.
+이런 방식으로 파이썬 언어가 가지는 높은 프로그래밍 생선성을 유지한 채로
+빠른 프로그램 실행과 외부 C 라이브러리 통합을 동시에 가능하게 한다.</p>
+<p>파이썬의 주된 실행 환경은 C로 만들어진 CPython이다. 이외에 자바(Jython <a class="reference internal" href="#jython" id="id2">[Jython]</a>),
+C# (IronPython <a class="reference internal" href="#ironpython" id="id3">[IronPython]</a>), 파이썬(PyPy <a class="reference internal" href="#pypy" id="id4">[PyPy]</a>)의 다른 구현도 있다.
+C로 만들어진 CPython은 C 언어 인터페이스를 통해 많은 외부 라이브러리를 래핑(wrapping)할 수 있다.
+그러나 C로 통합용 코드를 만드는 작업이 쉽지 않다.
+특히 C같은 기계어에 가까운 언어가 아닌 파이썬같은 고수준 언어에만 익숙한 프로그래머들에게는
+더 어렵다.</p>
+<p>싸이선은 Pyrex(<a class="reference internal" href="../tutorial/related_work_ko.html#pyrex" id="id5">[Pyrex]</a>)에 기반을 두고 있드며 파이썬 코드를 C 코드로
+자동 변환하는 소스코드 변환기를 사용하여 이 문제를 해결한다.
+이 코드는 CPython 실행 환경에서 실행되지만 컴파일된 C의 속도로 실행되며
+C 라이브러리들 직접 호출할 수도 있다.
+동시에 파이썬 소스코드의 원래 인터페이스도 유지하므로 다른 파이썬 코드에서도
+직접 사용할 수 있다.
+이런 두 특성으로 인해 싸이선은 두가지 경우에 많이 사용된다.:
+첫번째는 빠른 바이너리 모듈로 CPython 인터프리터 자체를 확장하는 것이고
+두번째는 외부 C 라이브러리와 파이썬 코드를 연결하는 인터페이스 역할이다.</p>
+<p>싸이선은 대부분의 정규 파이썬 코드를 컴파일할 수 있지만
+추가적으로 파이썬과 C 자료형을 정적 타입 선언하면 엄청난 속도 향상을 얻을 수도 있다.
+싸이선은 C 문법을 원래의 파이썬 코드 일부에 적용하여 효율적인 C 코드를 생성할 수 있다.</p>
+<p>자료형 선언의 목적은 두가지인데 하나는 파이썬의 동적 타입 문법을 정적이고 빠른 C 문법으로 바꾸는 것이고
+다른 하나는 외부 라이브러리에서 선언된 타입을 직접 다루기 위한 것이다.
+따라서 싸이선은 두 개의 프로그래밍 세계를 결합한, 폭넓게 적용 가능한 프로그래밍 언어가 된다.</p>
+<table class="docutils citation" frame="void" id="id6" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[Cython]</td><td>G. Ewing, R. W. Bradshaw, S. Behnel, D. S. Seljebotn et al.,
+The Cython compiler, <a class="reference external" href="http://cython.org">http://cython.org</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="ironpython" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[IronPython]</a></td><td>Jim Hugunin et al., <a class="reference external" href="http://www.codeplex.com/IronPython">http://www.codeplex.com/IronPython</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="jython" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[Jython]</a></td><td>J. Huginin, B. Warsaw, F. Bock, et al.,
+Jython: Python for the Java platform, <a class="reference external" href="http://www.jython.org">http://www.jython.org</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="pypy" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id4">[PyPy]</a></td><td>The PyPy Group, PyPy: a Python implementation written in Python,
+<a class="reference external" href="http://pypy.org">http://pypy.org</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="pyrex" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[Pyrex]</a></td><td>G. Ewing, Pyrex: C-Extensions for Python,
+<a class="reference external" href="http://www.cosc.canterbury.ac.nz/greg.ewing/python/Pyrex/">http://www.cosc.canterbury.ac.nz/greg.ewing/python/Pyrex/</a></td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="python" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[Python]</a></td><td>G. van Rossum et al., The Python programming language,
+<a class="reference external" href="http://python.org">http://python.org</a>.</td></tr>
+</tbody>
+</table>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index_ko.html">
+              <img class="logo" src="../../_static/cythonlogo.png" alt="Logo"/>
+            </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index_ko.html"
+                        title="previous chapter">시작하기</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="install_ko.html"
+                        title="next chapter">싸이선(Cython) 설치</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/src/quickstart/overview_ko.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="install_ko.html" title="싸이선(Cython) 설치"
+             >next</a></li>
+        <li class="right" >
+          <a href="index_ko.html" title="시작하기"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index_ko.html" >시작하기</a> &#187;</li> 
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Stefan Behnel, Robert Bradshaw, Dag Sverre Seljebotn, Greg Ewing, William Stein, Gabriel Gellner, et al..
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6139100-3");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </body>
+</html>

@@ -1,0 +1,456 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Debugging your Cython program &#8212; 싸이선(Cython) 0.28a0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.28a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Cython for NumPy users" href="numpy_tutorial.html" />
+    <link rel="prev" title="Using Parallelism" href="parallelism.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="numpy_tutorial.html" title="Cython for NumPy users"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="parallelism.html" title="Using Parallelism"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index_ko.html" accesskey="U">사용자 가이드</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="debugging-your-cython-program">
+<span id="debugging"></span><h1>Debugging your Cython program<a class="headerlink" href="#debugging-your-cython-program" title="Permalink to this headline">¶</a></h1>
+<p>Cython comes with an extension for the GNU Debugger that helps users debug
+Cython code. To use this functionality, you will need to install gdb 7.2 or
+higher, built with Python support (linked to Python 2.6 or higher).
+The debugger supports debuggees with versions 2.6 and higher. For Python 3,
+code should be built with Python 3 and the debugger should be run with
+Python 2 (or at least it should be able to find the Python 2 Cython
+installation). Note that in recent versions of Ubuntu, for instance, <code class="docutils literal"><span class="pre">gdb</span></code>
+installed with <code class="docutils literal"><span class="pre">apt-get</span></code> is configured with Python 3. On such systems, the
+proper configuration of <code class="docutils literal"><span class="pre">gdb</span></code> can be obtained by downloading the <code class="docutils literal"><span class="pre">gdb</span></code>
+source, and then running:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">configure</span> <span class="o">--</span><span class="k">with</span><span class="o">-</span><span class="n">python</span><span class="o">=</span><span class="n">python2</span>
+<span class="n">make</span>
+<span class="n">sudo</span> <span class="n">make</span> <span class="n">install</span>
+</pre></div>
+</div>
+<p>The debugger will need debug information that the Cython compiler can export.
+This can be achieved from within the setup script by passing <code class="docutils literal"><span class="pre">gdb_debug=True</span></code>
+to <code class="docutils literal"><span class="pre">cythonize()</span></code>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">from</span> <span class="nn">distutils.core</span> <span class="k">import</span> <span class="n">setup</span>
+<span class="k">from</span> <span class="nn">distutils.extension</span> <span class="k">import</span> <span class="n">Extension</span>
+
+<span class="n">extensions</span> <span class="o">=</span> <span class="p">[</span><span class="n">Extension</span><span class="p">(</span><span class="s">&#39;source&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;source.pyx&#39;</span><span class="p">])]</span>
+
+<span class="n">setup</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">ext_modules</span><span class="o">=</span><span class="n">cythonize</span><span class="p">(</span><span class="n">extensions</span><span class="p">,</span> <span class="n">gdb_debug</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>For development it’s often helpful to pass the <code class="docutils literal"><span class="pre">--inplace</span></code> flag to
+the <code class="docutils literal"><span class="pre">setup.py</span></code> script, which makes distutils build your project
+“in place”, i.e., not in a separate <cite>build</cite> directory.</p>
+<p>When invoking Cython from the command line directly you can have it write
+debug information using the <code class="docutils literal"><span class="pre">--gdb</span></code> flag:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="n">cython</span> <span class="o">--</span><span class="n">gdb</span> <span class="n">myfile</span><span class="o">.</span><span class="n">pyx</span>
+</pre></div>
+</div>
+<div class="section" id="running-the-debugger">
+<h2>Running the Debugger<a class="headerlink" href="#running-the-debugger" title="Permalink to this headline">¶</a></h2>
+<p>To run the Cython debugger and have it import the debug information exported
+by Cython, run <code class="docutils literal"><span class="pre">cygdb</span></code> in the build directory:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>$ python setup.py build_ext --inplace
+$ cygdb
+GNU gdb <span class="o">(</span>GDB<span class="o">)</span> <span class="m">7</span>.2
+...
+<span class="o">(</span>gdb<span class="o">)</span>
+</pre></div>
+</div>
+<p>When using the Cython debugger, it’s preferable that you build and run your code
+with an interpreter that is compiled with debugging symbols (i.e. configured
+with <code class="docutils literal"><span class="pre">--with-pydebug</span></code> or compiled with the <code class="docutils literal"><span class="pre">-g</span></code> CFLAG). If your Python is
+installed and managed by your package manager you probably need to install debug
+support separately, e.g. for ubuntu:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>$ sudo apt-get install python-dbg
+$ python-dbg setup.py build_ext --inplace
+</pre></div>
+</div>
+<p>Then you need to run your script with <code class="docutils literal"><span class="pre">python-dbg</span></code> also. Ensure that when
+building your package with debug symbols that cython extensions are re-compiled
+if they had been previously compiled. If your package is version controlled, you
+might want to perform <code class="docutils literal"><span class="pre">git</span> <span class="pre">clean</span> <span class="pre">-fxd</span></code> or <code class="docutils literal"><span class="pre">hg</span> <span class="pre">purge</span> <span class="pre">--all</span></code> before building.</p>
+<p>You can also pass additional arguments to gdb:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>$ cygdb /path/to/build/directory/ GDBARGS
+</pre></div>
+</div>
+<p>i.e.:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>$ cygdb . -- --args python-dbg mainscript.py
+</pre></div>
+</div>
+<p>To tell cygdb not to import any debug information, supply <code class="docutils literal"><span class="pre">--</span></code> as the first
+argument:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>$ cygdb --
+</pre></div>
+</div>
+</div>
+<div class="section" id="using-the-debugger">
+<h2>Using the Debugger<a class="headerlink" href="#using-the-debugger" title="Permalink to this headline">¶</a></h2>
+<p>The Cython debugger comes with a set of commands that support breakpoints,
+stack inspection, source code listing, stepping, stepping over, etc. Most
+of these commands are analogous to their respective gdb command.</p>
+<dl class="function">
+<dt>
+<code class="descname">cy break breakpoints...</code></dt>
+<dd><p>Break in a Python, Cython or C function. First it will look for a Cython
+function with that name, if cygdb doesn’t know about a function (or method)
+with that name, it will set a (pending) C breakpoint. The <code class="docutils literal"><span class="pre">-p</span></code> option can
+be used to specify a Python breakpoint.</p>
+<p>Breakpoints can be set for either the function or method name, or they can
+be fully “qualified”, which means that the entire “path” to a function is
+given:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="o">(</span>gdb<span class="o">)</span> cy <span class="nb">break</span> cython_function_or_method
+<span class="o">(</span>gdb<span class="o">)</span> cy <span class="nb">break</span> packagename.cython_module.cython_function
+<span class="o">(</span>gdb<span class="o">)</span> cy <span class="nb">break</span> packagename.cython_module.ClassName.cython_method
+<span class="o">(</span>gdb<span class="o">)</span> cy <span class="nb">break</span> c_function
+</pre></div>
+</div>
+<p>You can also break on Cython line numbers:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="o">(</span>gdb<span class="o">)</span> cy <span class="nb">break</span> :14
+<span class="o">(</span>gdb<span class="o">)</span> cy <span class="nb">break</span> cython_module:14
+<span class="o">(</span>gdb<span class="o">)</span> cy <span class="nb">break</span> packagename.cython_module:14
+</pre></div>
+</div>
+<p>Python breakpoints currently support names of the module (not the entire
+package path) and the function or method:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="o">(</span>gdb<span class="o">)</span> cy <span class="nb">break</span> -p python_module.python_function_or_method
+<span class="o">(</span>gdb<span class="o">)</span> cy <span class="nb">break</span> -p python_function_or_method
+</pre></div>
+</div>
+</dd></dl>
+
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Python breakpoints only work in Python builds where the Python frame
+information can be read from the debugger. To ensure this, use a
+Python debug build or a non-stripped build compiled with debug
+support.</p>
+</div>
+<dl class="function">
+<dt>
+<code class="descname">cy step</code></dt>
+<dd><p>Step through Python, Cython or C code. Python, Cython and C functions
+called directly from Cython code are considered relevant and will be
+stepped into.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">cy next</code></dt>
+<dd><p>Step over Python, Cython or C code.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">cy run</code></dt>
+<dd><p>Run the program. The default interpreter is the interpreter that was used
+to build your extensions with, or the interpreter <code class="docutils literal"><span class="pre">cygdb</span></code> is run with
+in case the “don’t import debug information” option was in effect.
+The interpreter can be overridden using gdb’s <code class="docutils literal"><span class="pre">file</span></code> command.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">cy cont</code></dt>
+<dd><p>Continue the program.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">cy up</code></dt>
+<dt>
+<code class="descname">cy down</code></dt>
+<dd><p>Go up and down the stack to what is considered a relevant frame.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">cy finish</code></dt>
+<dd><p>Execute until an upward relevant frame is met or something halts
+execution.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">cy bt</code></dt>
+<dt>
+<code class="descname">cy backtrace</code></dt>
+<dd><p>Print a traceback of all frames considered relevant. The <code class="docutils literal"><span class="pre">-a</span></code> option
+makes it print the full traceback (all C frames).</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">cy select</code></dt>
+<dd><p>Select a stack frame by number as listed by <code class="docutils literal"><span class="pre">cy</span> <span class="pre">backtrace</span></code>. This
+command is introduced because <code class="docutils literal"><span class="pre">cy</span> <span class="pre">backtrace</span></code> prints a reversed stack
+trace, so frame numbers differ from gdb’s <code class="docutils literal"><span class="pre">bt</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">cy print varname</code></dt>
+<dd><p>Print a local or global Cython, Python or C variable (depending on the
+context). Variables may also be dereferenced:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="o">(</span>gdb<span class="o">)</span> cy print x
+<span class="nv">x</span> <span class="o">=</span> <span class="m">1</span>
+<span class="o">(</span>gdb<span class="o">)</span> cy print *x
+*x <span class="o">=</span> <span class="o">(</span>PyObject<span class="o">)</span> <span class="o">{</span>
+    <span class="nv">_ob_next</span> <span class="o">=</span> 0x93efd8,
+    <span class="nv">_ob_prev</span> <span class="o">=</span> 0x93ef88,
+    <span class="nv">ob_refcnt</span> <span class="o">=</span> <span class="m">65</span>,
+    <span class="nv">ob_type</span> <span class="o">=</span> 0x83a3e0
+<span class="o">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">cy set cython_variable = value</code></dt>
+<dd><p>Set a Cython variable on the Cython stack to value.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">cy list</code></dt>
+<dd><p>List the source code surrounding the current line.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">cy locals</code></dt>
+<dt>
+<code class="descname">cy globals</code></dt>
+<dd><p>Print all the local and global variables and their values.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">cy import FILE...</code></dt>
+<dd><p>Import debug information from files given as arguments. The easiest way to
+import debug information is to use the cygdb command line tool.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">cy exec code</code></dt>
+<dd><p>Execute code in the current Python or Cython frame. This works like
+Python’s interactive interpreter.</p>
+<p>For Python frames it uses the globals and locals from the Python frame,
+for Cython frames it uses the dict of globals used on the Cython module
+and a new dict filled with the local Cython variables.</p>
+</dd></dl>
+
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><code class="docutils literal"><span class="pre">cy</span> <span class="pre">exec</span></code> modifies state and executes code in the debuggee and is
+therefore potentially dangerous.</p>
+</div>
+<p>Example:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="o">(</span>gdb<span class="o">)</span> cy <span class="nb">exec</span> x + <span class="m">1</span>
+<span class="m">2</span>
+<span class="o">(</span>gdb<span class="o">)</span> cy <span class="nb">exec</span> import sys<span class="p">;</span> print sys.version_info
+<span class="o">(</span><span class="m">2</span>, <span class="m">6</span>, <span class="m">5</span>, <span class="s1">&#39;final&#39;</span>, <span class="m">0</span><span class="o">)</span>
+<span class="o">(</span>gdb<span class="o">)</span> cy <span class="nb">exec</span>
+&gt;global foo
+&gt;
+&gt;foo <span class="o">=</span> <span class="s1">&#39;something&#39;</span>
+&gt;end
+</pre></div>
+</div>
+</div>
+<div class="section" id="convenience-functions">
+<h2>Convenience functions<a class="headerlink" href="#convenience-functions" title="Permalink to this headline">¶</a></h2>
+<p>The following functions are gdb functions, which means they can be used in a
+gdb expression.</p>
+<dl class="function">
+<dt id="cy_cname">
+<code class="descname">cy_cname</code><span class="sig-paren">(</span><em>varname</em><span class="sig-paren">)</span><a class="headerlink" href="#cy_cname" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the C variable name of a Cython variable. For global
+variables this may not be actually valid.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="cy_cvalue">
+<code class="descname">cy_cvalue</code><span class="sig-paren">(</span><em>varname</em><span class="sig-paren">)</span><a class="headerlink" href="#cy_cvalue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the value of a Cython variable.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="cy_eval">
+<code class="descname">cy_eval</code><span class="sig-paren">(</span><em>expression</em><span class="sig-paren">)</span><a class="headerlink" href="#cy_eval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluates Python code in the nearest Python or Cython frame and returns
+the result of the expression as a gdb value. This gives a new reference
+if successful, NULL on error.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="cy_lineno">
+<code class="descname">cy_lineno</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#cy_lineno" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current line number in the selected Cython frame.</p>
+</dd></dl>
+
+<p>Example:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="o">(</span>gdb<span class="o">)</span> print <span class="nv">$cy_cname</span><span class="o">(</span><span class="s2">&quot;x&quot;</span><span class="o">)</span>
+<span class="nv">$1</span> <span class="o">=</span> <span class="s2">&quot;__pyx_v_x&quot;</span>
+<span class="o">(</span>gdb<span class="o">)</span> watch <span class="nv">$cy_cvalue</span><span class="o">(</span><span class="s2">&quot;x&quot;</span><span class="o">)</span>
+Hardware watchpoint <span class="m">13</span>: <span class="nv">$cy_cvalue</span><span class="o">(</span><span class="s2">&quot;x&quot;</span><span class="o">)</span>
+<span class="o">(</span>gdb<span class="o">)</span> cy <span class="nb">set</span> <span class="nv">my_cython_variable</span> <span class="o">=</span> <span class="nv">$cy_eval</span><span class="o">(</span><span class="s2">&quot;{&#39;spam&#39;: &#39;ham&#39;}&quot;</span><span class="o">)</span>
+<span class="o">(</span>gdb<span class="o">)</span> print <span class="nv">$cy_lineno</span><span class="o">()</span>
+<span class="nv">$2</span> <span class="o">=</span> <span class="m">12</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="configuring-the-debugger">
+<h2>Configuring the Debugger<a class="headerlink" href="#configuring-the-debugger" title="Permalink to this headline">¶</a></h2>
+<p>A few aspects of the debugger are configurable with gdb parameters. For
+instance, colors can be disabled, the terminal background color
+and breakpoint autocompletion can be configured.</p>
+<dl class="macro">
+<dt id="c.cy_complete_unqualified">
+<code class="descname">cy_complete_unqualified</code><a class="headerlink" href="#c.cy_complete_unqualified" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tells the Cython debugger whether <code class="docutils literal"><span class="pre">cy</span> <span class="pre">break</span></code> should also complete
+plain function names, i.e. not prefixed by their module name.
+E.g. if you have a function named <code class="docutils literal"><span class="pre">spam</span></code>,
+in module <code class="docutils literal"><span class="pre">M</span></code>, it tells whether to only complete <code class="docutils literal"><span class="pre">M.spam</span></code> or also just
+<code class="docutils literal"><span class="pre">spam</span></code>.</p>
+<p>The default is true.</p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.cy_colorize_code">
+<code class="descname">cy_colorize_code</code><a class="headerlink" href="#c.cy_colorize_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tells the debugger whether to colorize source code. The default is true.</p>
+</dd></dl>
+
+<dl class="macro">
+<dt id="c.cy_terminal_background_color">
+<code class="descname">cy_terminal_background_color</code><a class="headerlink" href="#c.cy_terminal_background_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tells the debugger about the terminal background color, which affects
+source code coloring. The default is “dark”, another valid option is
+“light”.</p>
+</dd></dl>
+
+<p>This is how these parameters can be used:</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span><span class="o">(</span>gdb<span class="o">)</span> <span class="nb">set</span> cy_complete_unqualified off
+<span class="o">(</span>gdb<span class="o">)</span> <span class="nb">set</span> cy_terminal_background_color light
+<span class="o">(</span>gdb<span class="o">)</span> show cy_colorize_code
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index_ko.html">
+              <img class="logo" src="../../_static/cythonlogo.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="../../index_ko.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Debugging your Cython program</a><ul>
+<li><a class="reference internal" href="#running-the-debugger">Running the Debugger</a></li>
+<li><a class="reference internal" href="#using-the-debugger">Using the Debugger</a></li>
+<li><a class="reference internal" href="#convenience-functions">Convenience functions</a></li>
+<li><a class="reference internal" href="#configuring-the-debugger">Configuring the Debugger</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="parallelism.html"
+                        title="previous chapter">Using Parallelism</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="numpy_tutorial.html"
+                        title="next chapter">Cython for NumPy users</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/src/userguide/debugging.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="numpy_tutorial.html" title="Cython for NumPy users"
+             >next</a></li>
+        <li class="right" >
+          <a href="parallelism.html" title="Using Parallelism"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index_ko.html" >사용자 가이드</a> &#187;</li> 
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Stefan Behnel, Robert Bradshaw, Dag Sverre Seljebotn, Greg Ewing, William Stein, Gabriel Gellner, et al..
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6139100-3");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </body>
+</html>

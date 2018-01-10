@@ -1,0 +1,525 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Pure Python Mode &#8212; 싸이선(Cython) 0.28a0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.28a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pure-python-mode">
+<span id="pure-mode"></span><h1>Pure Python Mode<a class="headerlink" href="#pure-python-mode" title="Permalink to this headline">¶</a></h1>
+<p>In some cases, it’s desirable to speed up Python code without losing the
+ability to run it with the Python interpreter.  While pure Python scripts
+can be compiled with Cython, it usually results only in a speed gain of
+about 20%-50%.</p>
+<p>To go beyond that, Cython provides language constructs to add static typing
+and cythonic functionalities to a Python module to make it run much faster
+when compiled, while still allowing it to be interpreted.
+This is accomplished either via an augmenting <code class="file docutils literal"><span class="pre">.pxd</span></code> file, or
+via special functions and decorators available after importing the magic
+<code class="docutils literal"><span class="pre">cython</span></code> module.</p>
+<p>Although it is not typically recommended over writing straight Cython code
+in a <code class="file docutils literal"><span class="pre">.pyx</span></code> file, there are legitimate reasons to do this - easier
+testing, collaboration with pure Python developers, etc.  In pure mode, you
+are more or less restricted to code that can be expressed (or at least
+emulated) in Python, plus static type declarations. Anything beyond that
+can only be done in .pyx files with extended language syntax, because it
+depends on features of the Cython compiler.</p>
+<div class="section" id="augmenting-pxd">
+<h2>Augmenting .pxd<a class="headerlink" href="#augmenting-pxd" title="Permalink to this headline">¶</a></h2>
+<p>Using an augmenting <code class="file docutils literal"><span class="pre">.pxd</span></code> allows to let the original <code class="file docutils literal"><span class="pre">.py</span></code> file
+completely untouched.  On the other hand, one needs to maintain both the
+<code class="file docutils literal"><span class="pre">.pxd</span></code> and the <code class="file docutils literal"><span class="pre">.py</span></code> to keep them in sync.</p>
+<p>While declarations in a <code class="file docutils literal"><span class="pre">.pyx</span></code> file must correspond exactly with those
+of a <code class="file docutils literal"><span class="pre">.pxd</span></code> file with the same name (and any contradiction results in
+a compile time error, see <a class="reference internal" href="pxd_files.html"><span class="doc">pxd files</span></a>), the untyped definitions in a
+<code class="file docutils literal"><span class="pre">.py</span></code> file can be overridden and augmented with static types by the more
+specific ones present in a <code class="file docutils literal"><span class="pre">.pxd</span></code>.</p>
+<p>If a <code class="file docutils literal"><span class="pre">.pxd</span></code> file is found with the same name as the <code class="file docutils literal"><span class="pre">.py</span></code> file
+being compiled, it will be searched for <a class="reference internal" href="../reference/language_basics.html#cdef"><code class="xref std std-keyword docutils literal"><span class="pre">cdef</span></code></a> classes and
+<a class="reference internal" href="../reference/language_basics.html#cdef"><code class="xref std std-keyword docutils literal"><span class="pre">cdef</span></code></a>/<a class="reference internal" href="../reference/language_basics.html#cpdef"><code class="xref std std-keyword docutils literal"><span class="pre">cpdef</span></code></a> functions and methods.  The compiler will
+then convert the corresponding classes/functions/methods in the <code class="file docutils literal"><span class="pre">.py</span></code>
+file to be of the declared type.  Thus if one has a file <code class="file docutils literal"><span class="pre">A.py</span></code>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">myfunction</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">2</span><span class="p">):</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">x</span><span class="o">-</span><span class="n">y</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">x</span> <span class="o">*</span> <span class="n">y</span>
+
+<span class="k">def</span> <span class="nf">_helper</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="mf">1</span>
+
+<span class="k">class</span> <span class="nc">A</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mf">0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="mf">3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
+
+    <span class="k">def</span> <span class="nf">foo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">print</span> <span class="n">x</span> <span class="o">+</span> <span class="n">_helper</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>and adds <code class="file docutils literal"><span class="pre">A.pxd</span></code>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cpdef</span> <span class="kt">int</span> <span class="nf">myfunction</span><span class="p">(</span><span class="nb">int</span> <span class="n">x</span><span class="p">,</span> <span class="nb">int</span> <span class="n">y</span><span class="o">=*</span><span class="p">)</span>
+<span class="k">cdef</span> <span class="kt">double</span> <span class="nf">_helper</span><span class="p">(</span><span class="n">double</span> <span class="n">a</span><span class="p">)</span>
+
+<span class="k">cdef</span> <span class="k">class</span> <span class="nf">A</span><span class="p">:</span>
+    <span class="k">cdef</span> <span class="kr">public</span> <span class="kt">int</span> <span class="nf">a</span><span class="p">,</span><span class="nf">b</span>
+    <span class="k">cpdef</span> <span class="nf">foo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">double</span> <span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>then Cython will compile the <code class="file docutils literal"><span class="pre">A.py</span></code> as if it had been written as follows:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cpdef</span> <span class="kt">int</span> <span class="nf">myfunction</span><span class="p">(</span><span class="nb">int</span> <span class="n">x</span><span class="p">,</span> <span class="nb">int</span> <span class="n">y</span><span class="o">=</span><span class="mf">2</span><span class="p">):</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">x</span><span class="o">-</span><span class="n">y</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">x</span> <span class="o">*</span> <span class="n">y</span>
+
+<span class="k">cdef</span> <span class="kt">double</span> <span class="nf">_helper</span><span class="p">(</span><span class="n">double</span> <span class="n">a</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="mf">1</span>
+
+<span class="k">cdef</span> <span class="k">class</span> <span class="nf">A</span><span class="p">:</span>
+    <span class="k">cdef</span> <span class="kr">public</span> <span class="kt">int</span> <span class="nf">a</span><span class="p">,</span><span class="nf">b</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mf">0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="mf">3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
+
+    <span class="k">cpdef</span> <span class="nf">foo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">double</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">print</span> <span class="n">x</span> <span class="o">+</span> <span class="n">_helper</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Notice how in order to provide the Python wrappers to the definitions
+in the <code class="file docutils literal"><span class="pre">.pxd</span></code>, that is, to be accessible from Python,</p>
+<ul>
+<li><p class="first">Python visible function signatures must be declared as <cite>cpdef</cite> (with default
+arguments replaced by a <cite>*</cite> to avoid repetition):</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cpdef</span> <span class="kt">int</span> <span class="nf">myfunction</span><span class="p">(</span><span class="nb">int</span> <span class="n">x</span><span class="p">,</span> <span class="nb">int</span> <span class="n">y</span><span class="o">=*</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">C function signatures of internal functions can be declared as <cite>cdef</cite>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="kt">double</span> <span class="nf">_helper</span><span class="p">(</span><span class="n">double</span> <span class="n">a</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><cite>cdef</cite> classes (extension types) are declared as <cite>cdef class</cite>;</p>
+</li>
+<li><p class="first"><cite>cdef</cite> class attributes must be declared as <cite>cdef public</cite> if read/write
+Python access is needed, <cite>cdef readonly</cite> for read-only Python access, or
+plain <cite>cdef</cite> for internal C level attributes;</p>
+</li>
+<li><p class="first"><cite>cdef</cite> class methods must be declared as <cite>cpdef</cite> for Python visible
+methods or <cite>cdef</cite> for internal C methods.</p>
+</li>
+</ul>
+<p>In the example above, the type of the local variable <cite>a</cite> in <cite>myfunction()</cite>
+is not fixed and will thus be a Python object.  To statically type it, one
+can use Cython’s <code class="docutils literal"><span class="pre">&#64;cython.locals</span></code> decorator (see <a class="reference internal" href="pure_ko.html#magic-attributes"><span class="std std-ref">Magic Attributes</span></a>,
+and <a class="reference internal" href="pure_ko.html#magic-attributes-pxd"><span class="std std-ref">Magic Attributes within the .pxd</span></a>).</p>
+<p>Normal Python (<a class="reference external" href="https://docs.python.org/3/reference/compound_stmts.html#def" title="(in Python v3.6)"><code class="xref std std-keyword docutils literal"><span class="pre">def</span></code></a>) functions cannot be declared in <code class="file docutils literal"><span class="pre">.pxd</span></code>
+files.  It is therefore currently impossible to override the types of plain
+Python functions in <code class="file docutils literal"><span class="pre">.pxd</span></code> files, e.g. to override types of their local
+variables.  In most cases, declaring them as <cite>cpdef</cite> will work as expected.</p>
+</div>
+<div class="section" id="magic-attributes">
+<span id="id1"></span><h2>Magic Attributes<a class="headerlink" href="#magic-attributes" title="Permalink to this headline">¶</a></h2>
+<p>Special decorators are available from the magic <code class="docutils literal"><span class="pre">cython</span></code> module that can
+be used to add static typing within the Python file, while being ignored
+by the interpreter.</p>
+<p>This option adds the <code class="docutils literal"><span class="pre">cython</span></code> module dependency to the original code, but
+does not require to maintain a supplementary <code class="file docutils literal"><span class="pre">.pxd</span></code> file.  Cython
+provides a fake version of this module as <cite>Cython.Shadow</cite>, which is available
+as <cite>cython.py</cite> when Cython is installed, but can be copied to be used by other
+modules when Cython is not installed.</p>
+<div class="section" id="compiled-switch">
+<h3>“Compiled” switch<a class="headerlink" href="#compiled-switch" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first"><code class="docutils literal"><span class="pre">compiled</span></code> is a special variable which is set to <code class="docutils literal"><span class="pre">True</span></code> when the compiler
+runs, and <code class="docutils literal"><span class="pre">False</span></code> in the interpreter. Thus, the code</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">cython</span><span class="o">.</span><span class="n">compiled</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;Yep, I&#39;m compiled.&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;Just a lowly interpreted script.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>will behave differently depending on whether or not the code is executed as a
+compiled extension (<code class="file docutils literal"><span class="pre">.so</span></code>/<code class="file docutils literal"><span class="pre">.pyd</span></code>) module or a plain <code class="file docutils literal"><span class="pre">.py</span></code>
+file.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="static-typing">
+<h3>Static typing<a class="headerlink" href="#static-typing" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first"><code class="docutils literal"><span class="pre">cython.declare</span></code> declares a typed variable in the current scope, which can be
+used in place of the <code class="samp docutils literal"><span class="pre">cdef</span> <span class="pre">type</span> <span class="pre">var</span> <span class="pre">[=</span> <span class="pre">value]</span></code> construct. This has two forms,
+the first as an assignment (useful as it creates a declaration in interpreted
+mode as well):</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="n">cython</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>              <span class="c"># cdef int x</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">cython</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="n">cython</span><span class="o">.</span><span class="n">double</span><span class="p">,</span> <span class="mf">0.57721</span><span class="p">)</span>  <span class="c"># cdef double y = 0.57721</span>
+</pre></div>
+</div>
+<p>and the second mode as a simple function call:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="n">cython</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">double</span><span class="p">)</span>  <span class="c"># cdef int x; cdef double y</span>
+</pre></div>
+</div>
+<p>It can also be used to type class constructors:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">A</span><span class="p">:</span>
+    <span class="n">cython</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mf">0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="mf">3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
+</pre></div>
+</div>
+<p>And even to define extension type private, readonly and public attributes:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="nd">@cython</span><span class="o">.</span><span class="n">cclass</span>
+<span class="k">class</span> <span class="nc">A</span><span class="p">:</span>
+    <span class="n">cython</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">cython</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">,</span> <span class="n">visibility</span><span class="o">=</span><span class="s">&#39;public&#39;</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">cython</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">,</span> <span class="mf">5</span><span class="p">)</span>  <span class="c"># private by default.</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">cython</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">,</span> <span class="mf">5</span><span class="p">,</span> <span class="n">visibility</span><span class="o">=</span><span class="s">&#39;readonly&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">&#64;cython.locals</span></code> is a decorator that is used to specify the types of local
+variables in the function body (including the arguments):</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">double</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">double</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">p_double</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">foo</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">a</span><span class="o">*</span><span class="n">b</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">&#64;cython.returns(&lt;type&gt;)</span></code> specifies the function’s return type.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">&#64;cython.exceptval(value=None,</span> <span class="pre">*,</span> <span class="pre">check=False)</span></code> specifies the function’s exception
+return value and exception check semantics as follows:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="nd">@exceptval</span><span class="p">(</span><span class="o">-</span><span class="mf">1</span><span class="p">)</span>               <span class="c"># cdef int func() except -1:</span>
+<span class="nd">@exceptval</span><span class="p">(</span><span class="o">-</span><span class="mf">1</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>  <span class="c"># cdef int func() except -1:</span>
+<span class="nd">@exceptval</span><span class="p">(</span><span class="n">check</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>       <span class="c"># cdef int func() except *:</span>
+<span class="nd">@exceptval</span><span class="p">(</span><span class="o">-</span><span class="mf">1</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>   <span class="c"># cdef int func() except? -1:</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Python annotations can be used to declare argument types, as shown in the
+following example.  To avoid conflicts with other kinds of annotation
+usages, this can be disabled with the directive <code class="docutils literal"><span class="pre">annotation_typing=False</span></code>.</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">a_pydict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">a_cint</span><span class="p">:</span> <span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>This can be combined with the <code class="docutils literal"><span class="pre">&#64;cython.exceptval()</span></code> decorator for non-Python
+return types:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="nd">@cython</span><span class="o">.</span><span class="n">exceptval</span><span class="p">(</span><span class="o">-</span><span class="mf">1</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">x</span> <span class="p">:</span> <span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mf">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;need integer &gt;= 0&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">+</span><span class="mf">1</span>
+</pre></div>
+</div>
+<p>Since version 0.27, Cython also supports the variable annotations defined
+in <a class="reference external" href="https://www.python.org/dev/peps/pep-0526/">PEP 526</a>. This allows to
+declare types of variables in a Python 3.6 compatible way as follows:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">func</span><span class="p">():</span>
+    <span class="c"># Cython types are evaluated as for cdef declarations</span>
+    <span class="n">x</span> <span class="p">:</span> <span class="n">cython</span><span class="o">.</span><span class="n">int</span>               <span class="c"># cdef int x</span>
+    <span class="n">y</span> <span class="p">:</span> <span class="n">cython</span><span class="o">.</span><span class="n">double</span> <span class="o">=</span> <span class="mf">0.57721</span>  <span class="c"># cdef double y = 0.57721</span>
+    <span class="n">z</span> <span class="p">:</span> <span class="n">cython</span><span class="o">.</span><span class="n">float</span>  <span class="o">=</span> <span class="mf">0.57721</span>  <span class="c"># cdef float z  = 0.57721</span>
+
+    <span class="c"># Python types shadow Cython types for compatibility reasons</span>
+    <span class="n">a</span> <span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.54321</span>          <span class="c"># cdef double a = 0.54321</span>
+    <span class="n">b</span> <span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">5</span>                  <span class="c"># cdef object b = 5</span>
+    <span class="n">c</span> <span class="p">:</span> <span class="nb">long</span> <span class="o">=</span> <span class="mf">6</span>                 <span class="c"># cdef object c = 6</span>
+
+<span class="nd">@cython</span><span class="o">.</span><span class="n">cclass</span>
+<span class="k">class</span> <span class="nc">A</span><span class="p">:</span>
+    <span class="n">a</span> <span class="p">:</span> <span class="n">cython</span><span class="o">.</span><span class="n">int</span>
+    <span class="n">b</span> <span class="p">:</span> <span class="n">cython</span><span class="o">.</span><span class="n">int</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="mf">0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="mf">3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
+</pre></div>
+</div>
+<p>There is currently no way to express the visibility of object attributes.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="c-types">
+<h3>C types<a class="headerlink" href="#c-types" title="Permalink to this headline">¶</a></h3>
+<p>There are numerous types built into the Cython module.  It provides all the
+standard C types, namely <code class="docutils literal"><span class="pre">char</span></code>, <code class="docutils literal"><span class="pre">short</span></code>, <code class="docutils literal"><span class="pre">int</span></code>, <code class="docutils literal"><span class="pre">long</span></code>, <code class="docutils literal"><span class="pre">longlong</span></code>
+as well as their unsigned versions <code class="docutils literal"><span class="pre">uchar</span></code>, <code class="docutils literal"><span class="pre">ushort</span></code>, <code class="docutils literal"><span class="pre">uint</span></code>, <code class="docutils literal"><span class="pre">ulong</span></code>,
+<code class="docutils literal"><span class="pre">ulonglong</span></code>.  The special <code class="docutils literal"><span class="pre">bint</span></code> type is used for C boolean values and
+<code class="docutils literal"><span class="pre">Py_ssize_t</span></code> for (signed) sizes of Python containers.</p>
+<p>For each type, there are pointer types <code class="docutils literal"><span class="pre">p_int</span></code>, <code class="docutils literal"><span class="pre">pp_int</span></code>, etc., up to
+three levels deep in interpreted mode, and infinitely deep in compiled mode.
+Further pointer types can be constructed with <code class="docutils literal"><span class="pre">cython.pointer(cython.int)</span></code>,
+and arrays as <code class="docutils literal"><span class="pre">cython.int[10]</span></code>. A limited attempt is made to emulate these
+more complex types, but only so much can be done from the Python language.</p>
+<p>The Python types int, long and bool are interpreted as C <code class="docutils literal"><span class="pre">int</span></code>, <code class="docutils literal"><span class="pre">long</span></code>
+and <code class="docutils literal"><span class="pre">bint</span></code> respectively. Also, the Python builtin types <code class="docutils literal"><span class="pre">list</span></code>, <code class="docutils literal"><span class="pre">dict</span></code>,
+<code class="docutils literal"><span class="pre">tuple</span></code>, etc. may be used, as well as any user defined types.</p>
+<p>Typed C-tuples can be declared as a tuple of C types.</p>
+</div>
+<div class="section" id="extension-types-and-cdef-functions">
+<h3>Extension types and cdef functions<a class="headerlink" href="#extension-types-and-cdef-functions" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>The class decorator <code class="docutils literal"><span class="pre">&#64;cython.cclass</span></code> creates a <code class="docutils literal"><span class="pre">cdef</span> <span class="pre">class</span></code>.</li>
+<li>The function/method decorator <code class="docutils literal"><span class="pre">&#64;cython.cfunc</span></code> creates a <a class="reference internal" href="../reference/language_basics.html#cdef"><code class="xref std std-keyword docutils literal"><span class="pre">cdef</span></code></a> function.</li>
+<li><code class="docutils literal"><span class="pre">&#64;cython.ccall</span></code> creates a <a class="reference internal" href="../reference/language_basics.html#cpdef"><code class="xref std std-keyword docutils literal"><span class="pre">cpdef</span></code></a> function, i.e. one that Cython code
+can call at the C level.</li>
+<li><code class="docutils literal"><span class="pre">&#64;cython.locals</span></code> declares local variables (see above). It can also be used to
+declare types for arguments, i.e. the local variables that are used in the
+signature.</li>
+<li><code class="docutils literal"><span class="pre">&#64;cython.inline</span></code> is the equivalent of the C <code class="docutils literal"><span class="pre">inline</span></code> modifier.</li>
+<li><code class="docutils literal"><span class="pre">&#64;cython.final</span></code> terminates the inheritance chain by preventing a type from
+being used as a base class, or a method from being overridden in subtypes.
+This enables certain optimisations such as inlined method calls.</li>
+</ul>
+<p>Here is an example of a <a class="reference internal" href="../reference/language_basics.html#cdef"><code class="xref std std-keyword docutils literal"><span class="pre">cdef</span></code></a> function:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="nd">@cython</span><span class="o">.</span><span class="n">cfunc</span>
+<span class="nd">@cython</span><span class="o">.</span><span class="n">returns</span><span class="p">(</span><span class="n">cython</span><span class="o">.</span><span class="n">bint</span><span class="p">)</span>
+<span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">c_compare</span><span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">==</span> <span class="n">b</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="further-cython-functions-and-declarations">
+<h3>Further Cython functions and declarations<a class="headerlink" href="#further-cython-functions-and-declarations" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first"><code class="docutils literal"><span class="pre">address</span></code> is used in place of the <code class="docutils literal"><span class="pre">&amp;</span></code> operator:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="n">cython</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">,</span> <span class="n">x_ptr</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">p_int</span><span class="p">)</span>
+<span class="n">x_ptr</span> <span class="o">=</span> <span class="n">cython</span><span class="o">.</span><span class="n">address</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">sizeof</span></code> emulates the <cite>sizeof</cite> operator.  It can take both types and
+expressions.</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="n">cython</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">longlong</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">cython</span><span class="o">.</span><span class="n">sizeof</span><span class="p">(</span><span class="n">cython</span><span class="o">.</span><span class="n">longlong</span><span class="p">)</span>
+<span class="k">print</span> <span class="n">cython</span><span class="o">.</span><span class="n">sizeof</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">struct</span></code> can be used to create struct types.:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="n">MyStruct</span> <span class="o">=</span> <span class="n">cython</span><span class="o">.</span><span class="n">struct</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">double</span><span class="p">)</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">cython</span><span class="o">.</span><span class="n">declare</span><span class="p">(</span><span class="n">MyStruct</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>is equivalent to the code:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="k">struct</span> <span class="nf">MyStruct</span><span class="p">:</span>
+    <span class="nb">int</span> <span class="n">x</span>
+    <span class="nb">int</span> <span class="n">y</span>
+    <span class="n">double</span> <span class="n">data</span>
+
+<span class="k">cdef</span> <span class="kt">MyStruct</span> <span class="nf">a</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">union</span></code> creates union types with exactly the same syntax as <code class="docutils literal"><span class="pre">struct</span></code>.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">typedef</span></code> defines a type under a given name:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="n">T</span> <span class="o">=</span> <span class="n">cython</span><span class="o">.</span><span class="n">typedef</span><span class="p">(</span><span class="n">cython</span><span class="o">.</span><span class="n">p_int</span><span class="p">)</span>   <span class="c"># ctypedef int* T</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">cast</span></code> will (unsafely) reinterpret an expression type. <code class="docutils literal"><span class="pre">cython.cast(T,</span> <span class="pre">t)</span></code>
+is equivalent to <code class="docutils literal"><span class="pre">&lt;T&gt;t</span></code>. The first attribute must be a type, the second is
+the expression to cast. Specifying the optional keyword argument
+<code class="docutils literal"><span class="pre">typecheck=True</span></code> has the semantics of <code class="docutils literal"><span class="pre">&lt;T?&gt;t</span></code>.</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="n">t1</span> <span class="o">=</span> <span class="n">cython</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+<span class="n">t2</span> <span class="o">=</span> <span class="n">cython</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">T</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">typecheck</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="magic-attributes-within-the-pxd">
+<span id="magic-attributes-pxd"></span><h3>Magic Attributes within the .pxd<a class="headerlink" href="#magic-attributes-within-the-pxd" title="Permalink to this headline">¶</a></h3>
+<p>The special <cite>cython</cite> module can also be imported and used within the augmenting
+<code class="file docutils literal"><span class="pre">.pxd</span></code> file. For example, the following Python file <code class="file docutils literal"><span class="pre">dostuff.py</span></code>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">dostuff</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="mf">0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">+=</span> <span class="n">i</span>
+    <span class="k">return</span> <span class="n">t</span>
+</pre></div>
+</div>
+<p>can be augmented with the following <code class="file docutils literal"><span class="pre">.pxd</span></code> file <code class="file docutils literal"><span class="pre">dostuff.pxd</span></code>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="nn">cython</span>
+
+<span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">t</span> <span class="o">=</span> <span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+<span class="k">cpdef</span> <span class="kt">int</span> <span class="nf">dostuff</span><span class="p">(</span><span class="nb">int</span> <span class="n">n</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="xref py py-func docutils literal"><span class="pre">cython.declare()</span></code> function can be used to specify types for global
+variables in the augmenting <code class="file docutils literal"><span class="pre">.pxd</span></code> file.</p>
+</div>
+</div>
+<div class="section" id="tips-and-tricks">
+<h2>Tips and Tricks<a class="headerlink" href="#tips-and-tricks" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="calling-c-functions">
+<h3>Calling C functions<a class="headerlink" href="#calling-c-functions" title="Permalink to this headline">¶</a></h3>
+<p>Normally, it isn’t possible to call C functions in pure Python mode as there
+is no general way to support it in normal (uncompiled) Python.  However, in
+cases where an equivalent Python function exists, this can be achieved by
+combining C function coercion with a conditional import as follows:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="c"># in mymodule.pxd:</span>
+
+<span class="c"># declare a C function as &quot;cpdef&quot; to export it to the module</span>
+<span class="k">cdef</span> <span class="kr">extern</span> <span class="k">from</span> <span class="s">&quot;math.h&quot;</span><span class="p">:</span>
+    <span class="k">cpdef</span> <span class="kt">double</span> <span class="nf">sin</span><span class="p">(</span><span class="n">double</span> <span class="n">x</span><span class="p">)</span>
+
+
+<span class="c"># in mymodule.py:</span>
+
+<span class="k">import</span> <span class="nn">cython</span>
+
+<span class="c"># override with Python import if not in compiled code</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">cython</span><span class="o">.</span><span class="n">compiled</span><span class="p">:</span>
+    <span class="k">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">sin</span>
+
+<span class="c"># calls sin() from math.h when compiled with Cython and math.sin() in Python</span>
+<span class="k">print</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="mf">0</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Note that the “sin” function will show up in the module namespace of “mymodule”
+here (i.e. there will be a <code class="docutils literal"><span class="pre">mymodule.sin()</span></code> function).  You can mark it as an
+internal name according to Python conventions by renaming it to “_sin” in the
+<code class="docutils literal"><span class="pre">.pxd</span></code> file as follows:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="kr">extern</span> <span class="k">from</span> <span class="s">&quot;math.h&quot;</span><span class="p">:</span>
+    <span class="k">cpdef</span> <span class="kt">double</span> <span class="kt">_sin</span> <span class="s">&quot;sin&quot;</span> <span class="p">(</span><span class="n">double</span> <span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You would then also change the Python import to <code class="docutils literal"><span class="pre">from</span> <span class="pre">math</span> <span class="pre">import</span> <span class="pre">sin</span> <span class="pre">as</span> <span class="pre">_sin</span></code>
+to make the names match again.</p>
+</div>
+<div class="section" id="using-c-arrays-for-fixed-size-lists">
+<h3>Using C arrays for fixed size lists<a class="headerlink" href="#using-c-arrays-for-fixed-size-lists" title="Permalink to this headline">¶</a></h3>
+<p>Since Cython 0.22, C arrays can automatically coerce to Python lists or tuples.
+This can be exploited to replace fixed size Python lists in Python code by C
+arrays when compiled.  An example:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="nn">cython</span>
+
+<span class="nd">@cython</span><span class="o">.</span><span class="n">locals</span><span class="p">(</span><span class="n">counts</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">[</span><span class="mf">10</span><span class="p">],</span> <span class="n">digit</span><span class="o">=</span><span class="n">cython</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">count_digits</span><span class="p">(</span><span class="n">digits</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &gt;&gt;&gt; digits = &#39;01112222333334445667788899&#39;</span>
+<span class="sd">    &gt;&gt;&gt; count_digits(map(int, digits))</span>
+<span class="sd">    [1, 3, 4, 5, 3, 1, 2, 2, 3, 2]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0</span><span class="p">]</span> <span class="o">*</span> <span class="mf">10</span>
+    <span class="k">for</span> <span class="n">digit</span> <span class="ow">in</span> <span class="n">digits</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="mf">0</span> <span class="o">&lt;=</span> <span class="n">digit</span> <span class="o">&lt;=</span> <span class="mf">9</span>
+        <span class="n">counts</span><span class="p">[</span><span class="n">digit</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">1</span>
+    <span class="k">return</span> <span class="n">counts</span>
+</pre></div>
+</div>
+<p>In normal Python, this will use a Python list to collect the counts, whereas
+Cython will generate C code that uses a C array of C ints.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index_ko.html">
+              <img class="logo" src="../../_static/cythonlogo.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="../../index_ko.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Pure Python Mode</a><ul>
+<li><a class="reference internal" href="#augmenting-pxd">Augmenting .pxd</a></li>
+<li><a class="reference internal" href="#magic-attributes">Magic Attributes</a><ul>
+<li><a class="reference internal" href="#compiled-switch">“Compiled” switch</a></li>
+<li><a class="reference internal" href="#static-typing">Static typing</a></li>
+<li><a class="reference internal" href="#c-types">C types</a></li>
+<li><a class="reference internal" href="#extension-types-and-cdef-functions">Extension types and cdef functions</a></li>
+<li><a class="reference internal" href="#further-cython-functions-and-declarations">Further Cython functions and declarations</a></li>
+<li><a class="reference internal" href="#magic-attributes-within-the-pxd">Magic Attributes within the .pxd</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tips-and-tricks">Tips and Tricks</a><ul>
+<li><a class="reference internal" href="#calling-c-functions">Calling C functions</a></li>
+<li><a class="reference internal" href="#using-c-arrays-for-fixed-size-lists">Using C arrays for fixed size lists</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/src/tutorial/pure.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Stefan Behnel, Robert Bradshaw, Dag Sverre Seljebotn, Greg Ewing, William Stein, Gabriel Gellner, et al..
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6139100-3");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </body>
+</html>

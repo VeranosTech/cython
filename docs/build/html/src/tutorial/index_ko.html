@@ -1,0 +1,195 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>튜토리얼 &#8212; 싸이선(Cython) 0.28a0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.28a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="기초 튜토리얼" href="cython_tutorial_ko.html" />
+    <link rel="prev" title="정적 타이핑(static typing)을 이용한 빠른 코드" href="../quickstart/cythonize_ko.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="cython_tutorial_ko.html" title="기초 튜토리얼"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="../quickstart/cythonize_ko.html" title="정적 타이핑(static typing)을 이용한 빠른 코드"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="id1">
+<h1>튜토리얼<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cython_tutorial_ko.html">기초 튜토리얼</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="cython_tutorial_ko.html#the-basics-of-cython">The Basics of Cython</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cython_tutorial_ko.html#cython-hello-world">Cython Hello World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cython_tutorial_ko.html#fibonacci-fun">Fibonacci Fun</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cython_tutorial_ko.html#primes">Primes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cython_tutorial_ko.html#language-details">Language Details</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="external_ko.html">C 함수 호출</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="external_ko.html#dynamic-linking">Dynamic linking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="external_ko.html#external-declarations">External declarations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="external_ko.html#naming-parameters">Naming parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="clibraries_ko.html">C 라이브러리 사용</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="clibraries_ko.html#defining-external-declarations">Defining external declarations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clibraries_ko.html#writing-a-wrapper-class">Writing a wrapper class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clibraries_ko.html#memory-management">Memory management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clibraries_ko.html#compiling-and-linking">Compiling and linking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clibraries_ko.html#mapping-functionality">Mapping functionality</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clibraries_ko.html#handling-errors">Handling errors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clibraries_ko.html#testing-the-result">Testing the result</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clibraries_ko.html#callbacks">Callbacks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cdef_classes_ko.html">확장 자료형 (cdef 클래스)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pxd_files_ko.html">pxd 파일</a></li>
+<li class="toctree-l1"><a class="reference internal" href="caveats_ko.html">주의사항</a></li>
+<li class="toctree-l1"><a class="reference internal" href="profiling_tutorial_ko.html">프로파일링</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="profiling_tutorial_ko.html#cython-profiling-basics">Cython Profiling Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="profiling_tutorial_ko.html#profiling-tutorial">Profiling Tutorial</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="strings_ko.html">유니코드와 문자열 전달</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="strings_ko.html#python-string-types-in-cython-code">Python string types in Cython code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="strings_ko.html#string-literals">String literals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="strings_ko.html#general-notes-about-c-strings">General notes about C strings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="strings_ko.html#passing-byte-strings">Passing byte strings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="strings_ko.html#accepting-strings-from-python-code">Accepting strings from Python code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="strings_ko.html#dealing-with-const">Dealing with “const”</a></li>
+<li class="toctree-l2"><a class="reference internal" href="strings_ko.html#decoding-bytes-to-text">Decoding bytes to text</a></li>
+<li class="toctree-l2"><a class="reference internal" href="strings_ko.html#encoding-text-to-bytes">Encoding text to bytes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="strings_ko.html#c-strings">C++ strings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="strings_ko.html#auto-encoding-and-decoding">Auto encoding and decoding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="strings_ko.html#source-code-encoding">Source code encoding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="strings_ko.html#single-bytes-and-characters">Single bytes and characters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="strings_ko.html#narrow-unicode-builds">Narrow Unicode builds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="strings_ko.html#iteration">Iteration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="strings_ko.html#windows-and-wide-character-apis">Windows and wide character APIs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="memory_allocation_ko.html">메모리 할당</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pure_ko.html">순수 파이썬 모듈</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pure_ko.html#augmenting-pxd">Augmenting .pxd</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pure_ko.html#magic-attributes">Magic Attributes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pure_ko.html#tips-and-tricks">Tips and Tricks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="numpy_ko.html">NumPy 관련 작업</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="numpy_ko.html#adding-types">Adding types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="numpy_ko.html#efficient-indexing">Efficient indexing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="numpy_ko.html#tuning-indexing-further">Tuning indexing further</a></li>
+<li class="toctree-l2"><a class="reference internal" href="numpy_ko.html#more-generic-code">More generic code</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="array_ko.html">파이썬 배열 관련 작업</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="array_ko.html#safe-usage-with-memory-views">Safe usage with memory views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="array_ko.html#zero-overhead-unsafe-access-to-raw-c-pointer">Zero-overhead, unsafe access to raw C pointer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="array_ko.html#cloning-extending-arrays">Cloning, extending arrays</a></li>
+<li class="toctree-l2"><a class="reference internal" href="array_ko.html#api-reference">API reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="readings_ko.html">더 읽을 거리</a></li>
+<li class="toctree-l1"><a class="reference internal" href="related_work_ko.html">관련 작업</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendix_ko.html">부록: 윈도우에서 MinGW 설치</a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index_ko.html">
+              <img class="logo" src="../../_static/cythonlogo.png" alt="Logo"/>
+            </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../quickstart/cythonize_ko.html"
+                        title="previous chapter">정적 타이핑(static typing)을 이용한 빠른 코드</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="cython_tutorial_ko.html"
+                        title="next chapter">기초 튜토리얼</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/src/tutorial/index_ko.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="cython_tutorial_ko.html" title="기초 튜토리얼"
+             >next</a></li>
+        <li class="right" >
+          <a href="../quickstart/cythonize_ko.html" title="정적 타이핑(static typing)을 이용한 빠른 코드"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Stefan Behnel, Robert Bradshaw, Dag Sverre Seljebotn, Greg Ewing, William Stein, Gabriel Gellner, et al..
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6139100-3");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </body>
+</html>

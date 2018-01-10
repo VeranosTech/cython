@@ -1,0 +1,363 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Sharing Declarations Between Cython Modules &#8212; 싸이선(Cython) 0.28a0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.28a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Interfacing with External C Code" href="external_C_code.html" />
+    <link rel="prev" title="Special Methods of Extension Types" href="special_methods.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="external_C_code.html" title="Interfacing with External C Code"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="special_methods.html" title="Special Methods of Extension Types"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index_ko.html" accesskey="U">사용자 가이드</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="sharing-declarations-between-cython-modules">
+<span id="sharing-declarations"></span><h1>Sharing Declarations Between Cython Modules<a class="headerlink" href="#sharing-declarations-between-cython-modules" title="Permalink to this headline">¶</a></h1>
+<p>This section describes how to make C declarations, functions and extension
+types in one Cython module available for use in another Cython module.
+These facilities are closely modeled on the Python import mechanism,
+and can be thought of as a compile-time version of it.</p>
+<div class="section" id="definition-and-implementation-files">
+<h2>Definition and Implementation files<a class="headerlink" href="#definition-and-implementation-files" title="Permalink to this headline">¶</a></h2>
+<p>A Cython module can be split into two parts: a definition file with a <code class="docutils literal"><span class="pre">.pxd</span></code>
+suffix, containing C declarations that are to be available to other Cython
+modules, and an implementation file with a <code class="docutils literal"><span class="pre">.pyx</span></code> suffix, containing
+everything else. When a module wants to use something declared in another
+module’s definition file, it imports it using the <a class="reference internal" href="#cimport"><code class="xref std std-keyword docutils literal"><span class="pre">cimport</span></code></a>
+statement.</p>
+<p>A <code class="docutils literal"><span class="pre">.pxd</span></code> file that consists solely of extern declarations does not need
+to correspond to an actual <code class="docutils literal"><span class="pre">.pyx</span></code> file or Python module. This can make it a
+convenient place to put common declarations, for example declarations of
+functions from  an <a class="reference internal" href="external_C_code.html#external-c-code"><span class="std std-ref">external library</span></a> that one
+wants to use in several modules.</p>
+</div>
+<div class="section" id="what-a-definition-file-contains">
+<h2>What a Definition File contains<a class="headerlink" href="#what-a-definition-file-contains" title="Permalink to this headline">¶</a></h2>
+<p>A definition file can contain:</p>
+<ul class="simple">
+<li>Any kind of C type declaration.</li>
+<li>extern C function or variable declarations.</li>
+<li>Declarations of C functions defined in the module.</li>
+<li>The definition part of an extension type (see below).</li>
+</ul>
+<p>It cannot contain the implementations of any C or Python functions, or any
+Python class definitions, or any executable statements. It is needed when one
+wants to  access <a class="reference internal" href="../reference/language_basics.html#cdef"><code class="xref std std-keyword docutils literal"><span class="pre">cdef</span></code></a> attributes and methods, or to inherit from
+<a class="reference internal" href="../reference/language_basics.html#cdef"><code class="xref std std-keyword docutils literal"><span class="pre">cdef</span></code></a> classes defined in this module.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You don’t need to (and shouldn’t) declare anything in a declaration file
+public in order to make it available to other Cython modules; its mere
+presence in a definition file does that. You only need a public
+declaration if you want to make something available to external C code.</p>
+</div>
+</div>
+<div class="section" id="what-an-implementation-file-contains">
+<h2>What an Implementation File contains<a class="headerlink" href="#what-an-implementation-file-contains" title="Permalink to this headline">¶</a></h2>
+<p>An implementation file can contain any kind of Cython statement, although there
+are some restrictions on the implementation part of an extension type if the
+corresponding definition file also defines that type (see below).
+If one doesn’t need to <a class="reference internal" href="#cimport"><code class="xref std std-keyword docutils literal"><span class="pre">cimport</span></code></a> anything from this module, then this
+is the only file one needs.</p>
+</div>
+<div class="section" id="the-cimport-statement">
+<span id="cimport"></span><h2>The cimport statement<a class="headerlink" href="#the-cimport-statement" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference internal" href="#cimport"><code class="xref std std-keyword docutils literal"><span class="pre">cimport</span></code></a> statement is used in a definition or
+implementation file to gain access to names declared in another definition
+file. Its syntax exactly parallels that of the normal Python import
+statement:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cimport</span> <span class="nn">module</span> <span class="p">[,</span> <span class="n">module</span><span class="o">...</span><span class="p">]</span>
+
+<span class="k">from</span> <span class="nn">module</span> <span class="k">cimport</span> <span class="n">name</span> <span class="p">[</span><span class="k">as</span> <span class="n">name</span><span class="p">]</span> <span class="p">[,</span> <span class="n">name</span> <span class="p">[</span><span class="k">as</span> <span class="n">name</span><span class="p">]</span> <span class="o">...</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Here is an example. <code class="file docutils literal"><span class="pre">dishes.pxd</span></code> is a definition file which exports a
+C data type. <code class="file docutils literal"><span class="pre">restaurant.pyx</span></code> is an implementation file which imports and
+uses it.</p>
+<p><code class="file docutils literal"><span class="pre">dishes.pxd</span></code>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="k">enum</span> <span class="nf">otherstuff</span><span class="p">:</span>
+    <span class="n">sausage</span><span class="p">,</span> <span class="n">eggs</span><span class="p">,</span> <span class="n">lettuce</span>
+
+<span class="k">cdef</span> <span class="k">struct</span> <span class="nf">spamdish</span><span class="p">:</span>
+    <span class="nb">int</span> <span class="n">oz_of_spam</span>
+    <span class="n">otherstuff</span> <span class="n">filler</span>
+</pre></div>
+</div>
+<p><code class="file docutils literal"><span class="pre">restaurant.pyx</span></code>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cimport</span> <span class="nn">dishes</span>
+<span class="k">from</span> <span class="nn">dishes</span> <span class="k">cimport</span> <span class="n">spamdish</span>
+
+<span class="k">cdef</span> <span class="kt">void</span> <span class="nf">prepare</span><span class="p">(</span><span class="n">spamdish</span> <span class="o">*</span><span class="n">d</span><span class="p">):</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">oz_of_spam</span> <span class="o">=</span> <span class="mf">42</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">filler</span> <span class="o">=</span> <span class="n">dishes</span><span class="o">.</span><span class="n">sausage</span>
+
+<span class="k">def</span> <span class="nf">serve</span><span class="p">():</span>
+    <span class="k">cdef</span> <span class="kt">spamdish</span> <span class="nf">d</span>
+    <span class="n">prepare</span><span class="p">(</span><span class="o">&amp;</span><span class="n">d</span><span class="p">)</span>
+    <span class="k">print</span> <span class="s">&quot;</span><span class="si">%d</span><span class="s"> oz spam, filler no. </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">oz_of_spam</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">filler</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>It is important to understand that the <a class="reference internal" href="#cimport"><code class="xref std std-keyword docutils literal"><span class="pre">cimport</span></code></a> statement can only
+be used to import C data types, C functions and variables, and extension
+types. It cannot be used to import any Python objects, and (with one
+exception) it doesn’t imply any Python import at run time. If you want to
+refer to any Python names from a module that you have cimported, you will have
+to include a regular import statement for it as well.</p>
+<p>The exception is that when you use <a class="reference internal" href="#cimport"><code class="xref std std-keyword docutils literal"><span class="pre">cimport</span></code></a> to import an extension type, its
+type object is imported at run time and made available by the name under which
+you imported it. Using <a class="reference internal" href="#cimport"><code class="xref std std-keyword docutils literal"><span class="pre">cimport</span></code></a> to import extension types is covered in more
+detail below.</p>
+<p>If a <code class="docutils literal"><span class="pre">.pxd</span></code> file changes, any modules that <a class="reference internal" href="#cimport"><code class="xref std std-keyword docutils literal"><span class="pre">cimport</span></code></a> from it may need to be
+recompiled.  The <code class="docutils literal"><span class="pre">Cython.Build.cythonize</span></code> utility can take care of this for you.</p>
+<div class="section" id="search-paths-for-definition-files">
+<h3>Search paths for definition files<a class="headerlink" href="#search-paths-for-definition-files" title="Permalink to this headline">¶</a></h3>
+<p>When you <a class="reference internal" href="#cimport"><code class="xref std std-keyword docutils literal"><span class="pre">cimport</span></code></a> a module called <code class="docutils literal"><span class="pre">modulename</span></code>, the Cython
+compiler searches for a file called <code class="file docutils literal"><span class="pre">modulename.pxd</span></code>.
+It searches for this file along the path for include files
+(as specified by <code class="docutils literal"><span class="pre">-I</span></code> command line options or the <code class="docutils literal"><span class="pre">include_path</span></code>
+option to <code class="docutils literal"><span class="pre">cythonize()</span></code>), as well as <code class="docutils literal"><span class="pre">sys.path</span></code>.</p>
+<p>Using <code class="docutils literal"><span class="pre">package_data</span></code> to install <code class="docutils literal"><span class="pre">.pxd</span></code> files in your <code class="docutils literal"><span class="pre">setup.py</span></code> script
+allows other packages to cimport items from your module as a dependency.</p>
+<p>Also, whenever you compile a file <code class="file docutils literal"><span class="pre">modulename.pyx</span></code>, the corresponding
+definition file <code class="file docutils literal"><span class="pre">modulename.pxd</span></code> is first searched for along the
+include path (but not <code class="docutils literal"><span class="pre">sys.path</span></code>), and if found, it is processed before
+processing the <code class="docutils literal"><span class="pre">.pyx</span></code> file.</p>
+</div>
+<div class="section" id="using-cimport-to-resolve-naming-conflicts">
+<h3>Using cimport to resolve naming conflicts<a class="headerlink" href="#using-cimport-to-resolve-naming-conflicts" title="Permalink to this headline">¶</a></h3>
+<p>The <a class="reference internal" href="#cimport"><code class="xref std std-keyword docutils literal"><span class="pre">cimport</span></code></a> mechanism provides a clean and simple way to solve the
+problem of wrapping external C functions with Python functions of the same
+name. All you need to do is put the extern C declarations into a <code class="docutils literal"><span class="pre">.pxd</span></code> file
+for an imaginary module, and <a class="reference internal" href="#cimport"><code class="xref std std-keyword docutils literal"><span class="pre">cimport</span></code></a> that module. You can then
+refer to the C functions by qualifying them with the name of the module.
+Here’s an example:</p>
+<p><code class="file docutils literal"><span class="pre">c_lunch.pxd</span></code>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="kr">extern</span> <span class="k">from</span> <span class="s">&quot;lunch.h&quot;</span><span class="p">:</span>
+    <span class="n">void</span> <span class="n">eject_tomato</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="file docutils literal"><span class="pre">lunch.pyx</span></code>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cimport</span> <span class="nn">c_lunch</span>
+
+<span class="k">def</span> <span class="nf">eject_tomato</span><span class="p">(</span><span class="nb">float</span> <span class="n">speed</span><span class="p">):</span>
+    <span class="n">c_lunch</span><span class="o">.</span><span class="n">eject_tomato</span><span class="p">(</span><span class="n">speed</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You don’t need any <code class="file docutils literal"><span class="pre">c_lunch.pyx</span></code> file, because the only things defined
+in <code class="file docutils literal"><span class="pre">c_lunch.pxd</span></code> are extern C entities. There won’t be any actual
+<code class="docutils literal"><span class="pre">c_lunch</span></code> module at run time, but that doesn’t matter; the
+<code class="file docutils literal"><span class="pre">c_lunch.pxd</span></code> file has done its job of providing an additional namespace
+at compile time.</p>
+</div>
+</div>
+<div class="section" id="sharing-c-functions">
+<h2>Sharing C Functions<a class="headerlink" href="#sharing-c-functions" title="Permalink to this headline">¶</a></h2>
+<p>C functions defined at the top level of a module can be made available via
+<a class="reference internal" href="#cimport"><code class="xref std std-keyword docutils literal"><span class="pre">cimport</span></code></a> by putting headers for them in the <code class="docutils literal"><span class="pre">.pxd</span></code> file, for
+example:</p>
+<p><code class="file docutils literal"><span class="pre">volume.pxd</span></code>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="kt">float</span> <span class="nf">cube</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="file docutils literal"><span class="pre">volume.pyx</span></code>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="kt">float</span> <span class="nf">cube</span><span class="p">(</span><span class="nb">float</span> <span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span>
+</pre></div>
+</div>
+<p><code class="file docutils literal"><span class="pre">spammery.pyx</span></code>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">from</span> <span class="nn">volume</span> <span class="k">cimport</span> <span class="n">cube</span>
+
+<span class="k">def</span> <span class="nf">menu</span><span class="p">(</span><span class="n">description</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+    <span class="k">print</span> <span class="n">description</span><span class="p">,</span> <span class="s">&quot;:&quot;</span><span class="p">,</span> <span class="n">cube</span><span class="p">(</span><span class="n">size</span><span class="p">),</span> \
+        <span class="s">&quot;cubic metres of spam&quot;</span>
+
+<span class="n">menu</span><span class="p">(</span><span class="s">&quot;Entree&quot;</span><span class="p">,</span> <span class="mf">1</span><span class="p">)</span>
+<span class="n">menu</span><span class="p">(</span><span class="s">&quot;Main course&quot;</span><span class="p">,</span> <span class="mf">3</span><span class="p">)</span>
+<span class="n">menu</span><span class="p">(</span><span class="s">&quot;Dessert&quot;</span><span class="p">,</span> <span class="mf">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">When a module exports a C function in this way, an object appears in the
+module dictionary under the function’s name. However, you can’t make use of
+this object from Python, nor can you use it from Cython using a normal import
+statement; you have to use <a class="reference internal" href="#cimport"><code class="xref std std-keyword docutils literal"><span class="pre">cimport</span></code></a>.</p>
+</div>
+</div>
+<div class="section" id="sharing-extension-types">
+<h2>Sharing Extension Types<a class="headerlink" href="#sharing-extension-types" title="Permalink to this headline">¶</a></h2>
+<p>An extension type can be made available via <a class="reference internal" href="#cimport"><code class="xref std std-keyword docutils literal"><span class="pre">cimport</span></code></a> by splitting
+its definition into two parts, one in a definition file and the other in the
+corresponding implementation file.</p>
+<p>The definition part of the extension type can only declare C attributes and C
+methods, not Python methods, and it must declare all of that type’s C
+attributes and C methods.</p>
+<p>The implementation part must implement all of the C methods declared in the
+definition part, and may not add any further C attributes. It may also define
+Python methods.</p>
+<p>Here is an example of a module which defines and exports an extension type,
+and another module which uses it:</p>
+<p><code class="file docutils literal"><span class="pre">Shrubbing.pxd</span></code>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="k">class</span> <span class="nf">Shrubbery</span><span class="p">:</span>
+    <span class="k">cdef</span> <span class="kt">int</span> <span class="nf">width</span>
+    <span class="k">cdef</span> <span class="kt">int</span> <span class="nf">length</span>
+</pre></div>
+</div>
+<p><code class="file docutils literal"><span class="pre">Shrubbing.pyx</span></code>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="k">class</span> <span class="nf">Shrubbery</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__cinit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">int</span> <span class="n">w</span><span class="p">,</span> <span class="nb">int</span> <span class="n">l</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">w</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">l</span>
+
+<span class="k">def</span> <span class="nf">standard_shrubbery</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">Shrubbery</span><span class="p">(</span><span class="mf">3</span><span class="p">,</span> <span class="mf">7</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="file docutils literal"><span class="pre">Landscaping.pyx</span></code>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cimport</span> <span class="nn">Shrubbing</span>
+<span class="k">import</span> <span class="nn">Shrubbing</span>
+
+<span class="k">cdef</span> <span class="kt">Shrubbing</span>.<span class="kt">Shrubbery</span> <span class="nf">sh</span>
+<span class="n">sh</span> <span class="o">=</span> <span class="n">Shrubbing</span><span class="o">.</span><span class="n">standard_shrubbery</span><span class="p">()</span>
+<span class="k">print</span> <span class="s">&quot;Shrubbery size is </span><span class="si">%d</span><span class="s"> x </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">sh</span><span class="o">.</span><span class="n">length</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>One would then need to compile both of these modules, e.g. using</p>
+<p><code class="file docutils literal"><span class="pre">setup.py</span></code>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">from</span> <span class="nn">distutils.core</span> <span class="k">import</span> <span class="n">setup</span>
+<span class="k">from</span> <span class="nn">Cython.Build</span> <span class="k">import</span> <span class="n">cythonize</span>
+<span class="n">setup</span><span class="p">(</span><span class="n">ext_modules</span> <span class="o">=</span> <span class="n">cythonize</span><span class="p">([</span><span class="s">&quot;Landscaping.pyx&quot;</span><span class="p">,</span> <span class="s">&quot;Shrubbing.pyx&quot;</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p>Some things to note about this example:</p>
+<ul class="simple">
+<li>There is a <a class="reference internal" href="../reference/language_basics.html#cdef"><code class="xref std std-keyword docutils literal"><span class="pre">cdef</span></code></a> class Shrubbery declaration in both
+<code class="file docutils literal"><span class="pre">Shrubbing.pxd</span></code> and <code class="file docutils literal"><span class="pre">Shrubbing.pyx</span></code>. When the Shrubbing module
+is compiled, these two declarations are combined into one.</li>
+<li>In Landscaping.pyx, the <a class="reference internal" href="#cimport"><code class="xref std std-keyword docutils literal"><span class="pre">cimport</span></code></a> Shrubbing declaration allows us
+to refer to the Shrubbery type as <code class="xref py py-class docutils literal"><span class="pre">Shrubbing.Shrubbery</span></code>. But it
+doesn’t bind the name Shrubbing in Landscaping’s module namespace at run
+time, so to access <code class="xref py py-func docutils literal"><span class="pre">Shrubbing.standard_shrubbery()</span></code> we also need to
+<code class="docutils literal"><span class="pre">import</span> <span class="pre">Shrubbing</span></code>.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index_ko.html">
+              <img class="logo" src="../../_static/cythonlogo.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="../../index_ko.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Sharing Declarations Between Cython Modules</a><ul>
+<li><a class="reference internal" href="#definition-and-implementation-files">Definition and Implementation files</a></li>
+<li><a class="reference internal" href="#what-a-definition-file-contains">What a Definition File contains</a></li>
+<li><a class="reference internal" href="#what-an-implementation-file-contains">What an Implementation File contains</a></li>
+<li><a class="reference internal" href="#the-cimport-statement">The cimport statement</a><ul>
+<li><a class="reference internal" href="#search-paths-for-definition-files">Search paths for definition files</a></li>
+<li><a class="reference internal" href="#using-cimport-to-resolve-naming-conflicts">Using cimport to resolve naming conflicts</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sharing-c-functions">Sharing C Functions</a></li>
+<li><a class="reference internal" href="#sharing-extension-types">Sharing Extension Types</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="special_methods.html"
+                        title="previous chapter">Special Methods of Extension Types</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="external_C_code.html"
+                        title="next chapter">Interfacing with External C Code</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/src/userguide/sharing_declarations.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="external_C_code.html" title="Interfacing with External C Code"
+             >next</a></li>
+        <li class="right" >
+          <a href="special_methods.html" title="Special Methods of Extension Types"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index_ko.html" >사용자 가이드</a> &#187;</li> 
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Stefan Behnel, Robert Bradshaw, Dag Sverre Seljebotn, Greg Ewing, William Stein, Gabriel Gellner, et al..
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6139100-3");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </body>
+</html>

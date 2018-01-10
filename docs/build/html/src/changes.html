@@ -1,0 +1,2036 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cython Changelog &#8212; 싸이선(Cython) 0.28a0 documentation</title>
+    <link rel="stylesheet" href="../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.28a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Special Methods Table" href="reference/special_methods_table.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="reference/special_methods_table.html" title="Special Methods Table"
+             accesskey="P">previous</a></li>
+        <li class="nav-item nav-item-0"><a href="../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cython-changelog">
+<h1>Cython Changelog<a class="headerlink" href="#cython-changelog" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>0.28 (2017-??-??)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="features-added">
+<h3>Features added<a class="headerlink" href="#features-added" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Cdef classes can now multiply inherit from ordinary Python classes.
+(The primary base must still be a c class, possibly <code class="docutils literal"><span class="pre">object</span></code>, and
+the other bases must <em>not</em> be cdef classes.)</li>
+<li>Type inference is now supported for Pythran compiled NumPy expressions.
+Patch by Nils Braun.  (Github issue #1954)</li>
+<li>C file includes are moved behind the module declarations if possible, to allow
+them to depend on module declarations themselves.
+Patch by Jeroen Demeyer.  (Github issue #1896)</li>
+<li>Decorating an async coroutine with <code class="docutils literal"><span class="pre">&#64;types.coroutine</span></code> or <code class="docutils literal"><span class="pre">&#64;asyncio.coroutine</span></code>
+changes its type at compile time to make it iterable.  While this is not
+strictly in line with PEP-492, it improves the interoperability with old-style
+coroutines that use <code class="docutils literal"><span class="pre">yield</span> <span class="pre">from</span></code> instead of <code class="docutils literal"><span class="pre">await</span></code>.</li>
+<li>The new TSS C-API in CPython 3.7 is supported and has been backported.
+Patch by Naotoshi Seo.  (Github issue #1932)</li>
+<li>Subscripting (item access) is faster in some cases.</li>
+<li>Some <code class="docutils literal"><span class="pre">bytearray</span></code> operations have been optimised similar to <code class="docutils literal"><span class="pre">bytes</span></code>.</li>
+<li>Safe integer loops (&lt; range(2^30)) are optimised into C loops.</li>
+<li>Some PEP-484/526 container type declarations are now considered for
+loop optimisations.</li>
+<li>Python compatible <code class="docutils literal"><span class="pre">cython.*</span></code> types can now be mixed with type declarations
+in Cython syntax.</li>
+<li>Name lookups in the module and in classes are faster.</li>
+<li>Some missing signals were added to <code class="docutils literal"><span class="pre">libc/signal.pxd</span></code>.
+Patch by Jeroen Demeyer.  (Github issue #1914)</li>
+<li>The exception handling of the function types used by CPython’s type slot
+functions was corrected to match the de-facto standard behaviour, so that
+code that uses them directly benefits from automatic and correct exception
+propagation.  Patch by Jeroen Demeyer.  (Github issue #1980)</li>
+<li>Defining the macro <code class="docutils literal"><span class="pre">CYTHON_NO_PYINIT_EXPORT</span></code> will prevent the module init
+function from being exported as symbol, e.g. when linking modules statically
+in an embedding setup.  Patch by AraHaan.  (Github issue #1944)</li>
+</ul>
+</div>
+<div class="section" id="bugs-fixed">
+<h3>Bugs fixed<a class="headerlink" href="#bugs-fixed" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Catching exceptions with a non-trivial exception pattern could call into
+CPython with a live exception set.  This triggered incorrect behaviour
+and crashes, especially in CPython 3.7.</li>
+<li>Line tracing did not include generators and coroutines.
+(Github issue #1949)</li>
+<li>C++ declarations for <code class="docutils literal"><span class="pre">unordered_map</span></code> were corrected.
+Patch by Michael Schatzow.  (Github issue #1484)</li>
+<li>Iterator declarations in C++ <code class="docutils literal"><span class="pre">deque</span></code> and <code class="docutils literal"><span class="pre">vector</span></code> were corrected.
+Patch by Alex Huszagh.  (Github issue #1870)</li>
+</ul>
+</div>
+<div class="section" id="other-changes">
+<h3>Other changes<a class="headerlink" href="#other-changes" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="id2">
+<h2>0.27.3 (2017-11-03)<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id3">
+<h3>Bugs fixed<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>String forward references to extension types like <code class="docutils literal"><span class="pre">&#64;cython.locals(x=&quot;ExtType&quot;)</span></code>
+failed to find the named type.  (Github issue #1962)</li>
+<li>NumPy slicing generated incorrect results when compiled with Pythran.
+Original patch by Serge Guelton (Github issue #1946).</li>
+<li>Fix “undefined reference” linker error for generators on Windows in Py3.3-3.5.
+(Github issue #1968)</li>
+<li>Adapt to recent C-API change of <code class="docutils literal"><span class="pre">PyThreadState</span></code> in CPython 3.7.</li>
+<li>Fix signature of <code class="docutils literal"><span class="pre">PyWeakref_GetObject()</span></code> API declaration.
+Patch by Jeroen Demeyer (Github issue #1975).</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>0.27.2 (2017-10-22)<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id5">
+<h3>Bugs fixed<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Comprehensions could incorrectly be optimised away when they appeared in boolean
+test contexts.  (Github issue #1920)</li>
+<li>The special methods <code class="docutils literal"><span class="pre">__eq__</span></code>, <code class="docutils literal"><span class="pre">__lt__</span></code> etc. in extension types did not type
+their first argument as the type of the class but <code class="docutils literal"><span class="pre">object</span></code>.  (Github issue #1935)</li>
+<li>Crash on first lookup of “cline_in_traceback” option during exception handling.
+(Github issue #1907)</li>
+<li>Some nested module level comprehensions failed to compile.
+(Github issue #1906)</li>
+<li>Compiler crash on some complex type declarations in pure mode.
+(Github issue #1908)</li>
+<li><code class="docutils literal"><span class="pre">std::unordered_map.erase()</span></code> was declared with an incorrect <code class="docutils literal"><span class="pre">void</span></code> return
+type in <code class="docutils literal"><span class="pre">libcpp.unordered_map</span></code>.  (Github issue #1484)</li>
+<li>Invalid use of C++ <code class="docutils literal"><span class="pre">fallthrough</span></code> attribute before C++11 and similar issue in clang.
+(Github issue #1930)</li>
+<li>Compiler crash on misnamed properties. (Github issue #1905)</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id6">
+<h2>0.27.1 (2017-10-01)<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id7">
+<h3>Features added<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>The Jupyter magic has a new debug option <code class="docutils literal"><span class="pre">--verbose</span></code> that shows details about
+the distutils invocation.  Patch by Boris Filippov (Github issue #1881).</li>
+</ul>
+</div>
+<div class="section" id="id8">
+<h3>Bugs fixed<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Py3 list comprehensions in class bodies resulted in invalid C code.
+(Github issue #1889)</li>
+<li>Modules built for later CPython 3.5.x versions failed to import in 3.5.0/3.5.1.
+(Github issue #1880)</li>
+<li>Deallocating fused types functions and methods kept their GC tracking enabled,
+which could potentially lead to recursive deallocation attempts.</li>
+<li>Crash when compiling in C++ mode with old setuptools versions.
+(Github issue #1879)</li>
+<li>C++ object arguments for the constructor of Cython implemented C++ are now
+passed by reference and not by value to allow for non-copyable arguments, such
+as <code class="docutils literal"><span class="pre">unique_ptr</span></code>.</li>
+<li>API-exported C++ classes with Python object members failed to compile.
+(Github issue #1866)</li>
+<li>Some issues with the new relaxed exception value handling were resolved.</li>
+<li>Python classes as annotation types could prevent compilation.
+(Github issue #1887)</li>
+<li>Cython annotation types in Python files could lead to import failures
+with a “cython undefined” error.  Recognised types are now turned into strings.</li>
+<li>Coverage analysis could fail to report on extension modules on some platforms.</li>
+<li>Annotations could be parsed (and rejected) as types even with
+<code class="docutils literal"><span class="pre">annotation_typing=False</span></code>.</li>
+</ul>
+</div>
+<div class="section" id="id9">
+<h3>Other changes<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>PEP 489 support has been disabled by default to counter incompatibilities with
+import setups that try to reload or reinitialise modules.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id10">
+<h2>0.27 (2017-09-23)<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id11">
+<h3>Features added<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Extension module initialisation follows
+<a class="reference external" href="https://www.python.org/dev/peps/pep-0489/">PEP 489</a> in CPython 3.5+, which
+resolves several differences with regard to normal Python modules.  This makes
+the global names <code class="docutils literal"><span class="pre">__file__</span></code> and <code class="docutils literal"><span class="pre">__path__</span></code> correctly available to module
+level code and improves the support for module-level relative imports.
+(Github issues #1715, #1753, #1035)</li>
+<li>Asynchronous generators (<a class="reference external" href="https://www.python.org/dev/peps/pep-0525/">PEP 525</a>)
+and asynchronous comprehensions (<a class="reference external" href="https://www.python.org/dev/peps/pep-0530/">PEP 530</a>)
+have been implemented.  Note that async generators require finalisation support
+in order to allow for asynchronous operations during cleanup, which is only
+available in CPython 3.6+.  All other functionality has been backported as usual.</li>
+<li>Variable annotations are now parsed according to
+<a class="reference external" href="https://www.python.org/dev/peps/pep-0526/">PEP 526</a>.  Cython types (e.g.
+<code class="docutils literal"><span class="pre">cython.int</span></code>) are evaluated as C type declarations and everything else as Python
+types.  This can be disabled with the directive <code class="docutils literal"><span class="pre">annotation_typing=False</span></code>.
+Note that most complex PEP-484 style annotations are currently ignored.  This will
+change in future releases. (Github issue #1850)</li>
+<li>Extension types (also in pure Python mode) can implement the normal special methods
+<code class="docutils literal"><span class="pre">__eq__</span></code>, <code class="docutils literal"><span class="pre">__lt__</span></code> etc. for comparisons instead of the low-level <code class="docutils literal"><span class="pre">__richcmp__</span></code>
+method.  (Github issue #690)</li>
+<li>New decorator <code class="docutils literal"><span class="pre">&#64;cython.exceptval(x=None,</span> <span class="pre">check=False)</span></code> that makes the signature
+declarations <code class="docutils literal"><span class="pre">except</span> <span class="pre">x</span></code>, <code class="docutils literal"><span class="pre">except?</span> <span class="pre">x</span></code> and <code class="docutils literal"><span class="pre">except</span> <span class="pre">*</span></code> available to pure Python
+code.  Original patch by Antonio Cuni.  (Github issue #1653)</li>
+<li>Signature annotations are now included in the signature docstring generated by
+the <code class="docutils literal"><span class="pre">embedsignature</span></code> directive.  Patch by Lisandro Dalcin (Github issue #1781).</li>
+<li>The gdb support for Python code (<code class="docutils literal"><span class="pre">libpython.py</span></code>) was updated to the latest
+version in CPython 3.7 (git rev 5fe59f8).</li>
+<li>The compiler tries to find a usable exception return value for cdef functions
+with <code class="docutils literal"><span class="pre">except</span> <span class="pre">*</span></code> if the returned type allows it.  Note that this feature is subject
+to safety limitations, so it is still better to provide an explicit declaration.</li>
+<li>C functions can be assigned to function pointers with a compatible exception
+declaration, not only with exact matches.  A side-effect is that certain compatible
+signature overrides are now allowed and some more mismatches of exception signatures
+are now detected and rejected as errors that were not detected before.</li>
+<li>The IPython/Jupyter magic integration has a new option <code class="docutils literal"><span class="pre">%%cython</span> <span class="pre">--pgo</span></code> for profile
+guided optimisation. It compiles the cell with PGO settings for the C compiler,
+executes it to generate a runtime profile, and then compiles it again using that
+profile for C compiler optimisation.  Currently only tested with gcc.</li>
+<li><code class="docutils literal"><span class="pre">len(memoryview)</span></code> can be used in nogil sections to get the size of the
+first dimension of a memory view (<code class="docutils literal"><span class="pre">shape[0]</span></code>). (Github issue #1733)</li>
+<li>C++ classes can now contain (properly refcounted) Python objects.</li>
+<li>NumPy dtype subarrays are now accessible through the C-API.
+Patch by Gerald Dalley (Github issue #245).</li>
+<li>Resolves several issues with PyPy and uses faster async slots in PyPy3.
+Patch by Ronan Lamy (Github issues #1871, #1878).</li>
+</ul>
+</div>
+<div class="section" id="id12">
+<h3>Bugs fixed<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Extension types that were cimported from other Cython modules could disagree
+about the order of fused cdef methods in their call table.  This could lead
+to wrong methods being called and potentially also crashes.  The fix required
+changes to the ordering of fused methods in the call table, which may break
+existing compiled modules that call fused cdef methods across module boundaries,
+if these methods were implemented in a different order than they were declared
+in the corresponding .pxd file. (Github issue #1873)</li>
+<li>The exception state handling in generators and coroutines could lead to
+exceptions in the caller being lost if an exception was raised and handled
+inside of the coroutine when yielding. (Github issue #1731)</li>
+<li>Loops over <code class="docutils literal"><span class="pre">range(enum)</span></code> were not converted into C for-loops.  Note that it
+is still recommended to use an explicit cast to a C integer type in this case.</li>
+<li>Error positions of names (e.g. variables) were incorrectly reported after the
+name and not at the beginning of the name.</li>
+<li>Compile time <code class="docutils literal"><span class="pre">DEF</span></code> assignments were evaluated even when they occur inside of
+falsy <code class="docutils literal"><span class="pre">IF</span></code> blocks. (Github issue #1796)</li>
+<li>Disabling the line tracing from a trace function could fail.
+Original patch by Dmitry Trofimov. (Github issue #1769)</li>
+<li>Several issues with the Pythran integration were resolved.</li>
+<li>abs(signed int) now returns a signed rather than unsigned int.
+(Github issue #1837)</li>
+<li>Reading <code class="docutils literal"><span class="pre">frame.f_locals</span></code> of a Cython function (e.g. from a debugger or profiler
+could modify the module globals. (Github issue #1836)</li>
+<li>Buffer type mismatches in the NumPy buffer support could leak a reference to the
+buffer owner.</li>
+<li>Using the “is_f_contig” and “is_c_contig” memoryview methods together could leave
+one of them undeclared. (Github issue #1872)</li>
+<li>Compilation failed if the for-in-range loop target was not a variable but a more
+complex expression, e.g. an item assignment. (Github issue #1831)</li>
+<li>Compile time evaluations of (partially) constant f-strings could show incorrect
+results.</li>
+<li>Escape sequences in raw f-strings (<code class="docutils literal"><span class="pre">fr'...'</span></code>) were resolved instead of passing
+them through as expected.</li>
+<li>Some ref-counting issues in buffer error handling have been resolved.</li>
+</ul>
+</div>
+<div class="section" id="id13">
+<h3>Other changes<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Type declarations in signature annotations are now parsed according to
+<a class="reference external" href="https://www.python.org/dev/peps/pep-0484/">PEP 484</a>
+typing.  Only Cython types (e.g. <code class="docutils literal"><span class="pre">cython.int</span></code>) and Python builtin types are
+currently considered as type declarations.  Everything else is ignored, but this
+will change in a future Cython release.
+(Github issue #1672)</li>
+<li>The directive <code class="docutils literal"><span class="pre">annotation_typing</span></code> is now <code class="docutils literal"><span class="pre">True</span></code> by default, which enables
+parsing type declarations from annotations.</li>
+<li>This release no longer supports Python 3.2.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id14">
+<h2>0.26.1 (2017-08-29)<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id15">
+<h3>Features added<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id16">
+<h3>Bugs fixed<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">cython.view.array</span></code> was missing <code class="docutils literal"><span class="pre">.__len__()</span></code>.</li>
+<li>Extension types with a <code class="docutils literal"><span class="pre">.pxd</span></code> override for their <code class="docutils literal"><span class="pre">__releasebuffer__</span></code> slot
+(e.g. as provided by Cython for the Python <code class="docutils literal"><span class="pre">array.array</span></code> type) could leak
+a reference to the buffer owner on release, thus not freeing the memory.
+(Github issue #1638)</li>
+<li>Auto-decoding failed in 0.26 for strings inside of C++ containers.
+(Github issue #1790)</li>
+<li>Compile error when inheriting from C++ container types.
+(Github issue #1788)</li>
+<li>Invalid C code in generators (declaration after code).
+(Github issue #1801)</li>
+<li>Arithmetic operations on <code class="docutils literal"><span class="pre">const</span></code> integer variables could generate invalid code.
+(Github issue #1798)</li>
+<li>Local variables with names of special Python methods failed to compile inside of
+closures. (Github issue #1797)</li>
+<li>Problem with indirect Emacs buffers in cython-mode.
+Patch by Martin Albrecht (Github issue #1743).</li>
+<li>Extension types named <code class="docutils literal"><span class="pre">result</span></code> or <code class="docutils literal"><span class="pre">PickleError</span></code> generated invalid unpickling code.
+Patch by Jason Madden (Github issue #1786).</li>
+<li>Bazel integration failed to compile <code class="docutils literal"><span class="pre">.py</span></code> files.
+Patch by Guro Bokum (Github issue #1784).</li>
+<li>Some include directories and dependencies were referenced with their absolute paths
+in the generated files despite lying within the project directory.</li>
+<li>Failure to compile in Py3.7 due to a modified signature of <code class="docutils literal"><span class="pre">_PyCFunctionFast()</span></code></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id17">
+<h2>0.26 (2017-07-19)<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id18">
+<h3>Features added<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Pythran can be used as a backend for evaluating NumPy array expressions.
+Patch by Adrien Guinet (Github issue #1607).</li>
+<li>cdef classes now support pickling by default when possible.
+This can be disabled with the <code class="docutils literal"><span class="pre">auto_pickle</span></code> directive.</li>
+<li>Speed up comparisons of strings if their hash value is available.
+Patch by Claudio Freire (Github issue #1571).</li>
+<li>Support pyximport from zip files.
+Patch by Sergei Lebedev (Github issue #1485).</li>
+<li>IPython magic now respects the <code class="docutils literal"><span class="pre">__all__</span></code> variable and ignores
+names with leading-underscore (like <code class="docutils literal"><span class="pre">import</span> <span class="pre">*</span></code> does).
+Patch by Syrtis Major (Github issue #1625).</li>
+<li><code class="docutils literal"><span class="pre">abs()</span></code> is optimised for C complex numbers.
+Patch by da-woods (Github issue #1648).</li>
+<li>The display of C lines in Cython tracebacks can now be enabled at runtime
+via <code class="docutils literal"><span class="pre">import</span> <span class="pre">cython_runtime;</span> <span class="pre">cython_runtime.cline_in_traceback=True</span></code>.
+The default has been changed to False.</li>
+<li>The overhead of calling fused types generic functions was reduced.</li>
+<li>“cdef extern” include files are now also searched relative to the current file.
+Patch by Jeroen Demeyer (Github issue #1654).</li>
+<li>Optional optimization for re-aquiring the GIL, controlled by the
+<cite>fast_gil</cite> directive.</li>
+</ul>
+</div>
+<div class="section" id="id19">
+<h3>Bugs fixed<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Item lookup/assignment with a unicode character as index that is typed
+(explicitly or implicitly) as <code class="docutils literal"><span class="pre">Py_UCS4</span></code> or <code class="docutils literal"><span class="pre">Py_UNICODE</span></code> used the
+integer value instead of the Unicode string value. Code that relied on
+the previous behaviour now triggers a warning that can be disabled by
+applying an explicit cast. (Github issue #1602)</li>
+<li>f-string processing was adapted to changes in PEP 498 and CPython 3.6.</li>
+<li>Invalid C code when decoding from UTF-16(LE/BE) byte strings.
+(Github issue #1696)</li>
+<li>Unicode escapes in ‘ur’ raw-unicode strings were not resolved in Py2 code.
+Original patch by Aaron Gallagher (Github issue #1594).</li>
+<li>File paths of code objects are now relative.
+Original patch by Jelmer Vernooij (Github issue #1565).</li>
+<li>Decorators of cdef class methods could be executed twice.
+Patch by Jeroen Demeyer (Github issue #1724).</li>
+<li>Dict iteration using the Py2 <code class="docutils literal"><span class="pre">iter*</span></code> methods failed in PyPy3.
+Patch by Armin Rigo (Github issue #1631).</li>
+<li>Several warnings in the generated code are now suppressed.</li>
+</ul>
+</div>
+<div class="section" id="id20">
+<h3>Other changes<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>The <code class="docutils literal"><span class="pre">unraisable_tracebacks</span></code> option now defaults to <code class="docutils literal"><span class="pre">True</span></code>.</li>
+<li>Coercion of C++ containers to Python is no longer automatic on attribute
+access (Github issue #1521).</li>
+<li>Access to Python attributes of cimported modules without the corresponding
+import is now a compile-time (rather than runtime) error.</li>
+<li>Do not use special dll linkage for “cdef public” functions.
+Patch by Jeroen Demeyer (Github issue #1687).</li>
+<li>cdef/cpdef methods must match their declarations.  See Github Issue #1732.
+This is now a warning and will be an error in future releases.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id21">
+<h2>0.25.2 (2016-12-08)<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id22">
+<h3>Bugs fixed<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Fixes several issues with C++ template deduction.</li>
+<li>Fixes a issue with bound method type inference (Github issue #551).</li>
+<li>Fixes a bug with cascaded tuple assignment (Github issue #1523).</li>
+<li>Fixed or silenced many Clang warnings.</li>
+<li>Fixes bug with powers of pure real complex numbers (Github issue #1538).</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id23">
+<h2>0.25.1 (2016-10-26)<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id24">
+<h3>Bugs fixed<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Fixes a bug with <code class="docutils literal"><span class="pre">isinstance(o,</span> <span class="pre">Exception)</span></code> (Github issue #1496).</li>
+<li>Fixes bug with <code class="docutils literal"><span class="pre">cython.view.array</span></code> missing utility code in some cases
+(Github issue #1502).</li>
+</ul>
+</div>
+<div class="section" id="id25">
+<h3>Other changes<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>The distutils extension <code class="docutils literal"><span class="pre">Cython.Distutils.build_ext</span></code> has been reverted,
+temporarily, to be <code class="docutils literal"><span class="pre">old_build_ext</span></code> to give projects time to migrate.
+The new build_ext is available as <code class="docutils literal"><span class="pre">new_build_ext</span></code>.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id26">
+<h2>0.25 (2016-10-25)<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id27">
+<h3>Features added<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>def/cpdef methods of cdef classes benefit from Cython’s internal function
+implementation, which enables introspection and line profiling for them.
+Implementation sponsored by Turbostream (www.turbostream-cfd.com).</li>
+<li>Calls to Python functions are faster, following the recent “FastCall”
+optimisations that Victor Stinner implemented for CPython 3.6.
+See <a class="reference external" href="https://bugs.python.org/issue27128">https://bugs.python.org/issue27128</a> and related issues.</li>
+<li>The new METH_FASTCALL calling convention for PyCFunctions is supported
+in CPython 3.6.  See <a class="reference external" href="https://bugs.python.org/issue27810">https://bugs.python.org/issue27810</a></li>
+<li>Initial support for using Cython modules in Pyston.  Patch by Daetalus.</li>
+<li>Dynamic Python attributes are allowed on cdef classes if an attribute
+<code class="docutils literal"><span class="pre">cdef</span> <span class="pre">dict</span> <span class="pre">__dict__</span></code> is declared in the class.  Patch by empyrical.</li>
+<li>Cython implemented C++ classes can make direct calls to base class methods.
+Patch by empyrical.</li>
+<li>C++ classes can now have typedef members. STL containers updated with
+value_type.</li>
+<li>New directive <code class="docutils literal"><span class="pre">cython.no_gc</span></code> to fully disable GC for a cdef class.
+Patch by Claudio Freire.</li>
+<li>Buffer variables are no longer excluded from <code class="docutils literal"><span class="pre">locals()</span></code>.
+Patch by da-woods.</li>
+<li>Building f-strings is faster, especially when formatting C integers.</li>
+<li>for-loop iteration over “std::string”.</li>
+<li><code class="docutils literal"><span class="pre">libc/math.pxd</span></code> provides <code class="docutils literal"><span class="pre">e</span></code> and <code class="docutils literal"><span class="pre">pi</span></code> as alias constants to simplify
+usage as a drop-in replacement for Python’s math module.</li>
+<li>Speed up cython.inline().</li>
+<li>Binary lshift operations with small constant Python integers are faster.</li>
+<li>Some integer operations on Python long objects are faster in Python 2.7.</li>
+<li>Support for the C++ <code class="docutils literal"><span class="pre">typeid</span></code> operator.</li>
+<li>Support for bazel using a the pyx_library rule in //Tools:rules.bzl.</li>
+</ul>
+</div>
+<div class="section" id="significant-bugs-fixed">
+<h3>Significant Bugs fixed<a class="headerlink" href="#significant-bugs-fixed" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Division of complex numbers avoids overflow by using Smith’s method.</li>
+<li>Some function signatures in <code class="docutils literal"><span class="pre">libc.math</span></code> and <code class="docutils literal"><span class="pre">numpy.pxd</span></code> were incorrect.
+Patch by Michael Seifert.</li>
+</ul>
+</div>
+<div class="section" id="id28">
+<h3>Other changes<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>The “%%cython” IPython/jupyter magic now defaults to the language level of
+the current jupyter kernel.  The language level can be set explicitly with
+“%%cython -2” or “%%cython -3”.</li>
+<li>The distutils extension <code class="docutils literal"><span class="pre">Cython.Distutils.build_ext</span></code> has now been updated
+to use cythonize which properly handles dependencies.  The old extension can
+still be found in <code class="docutils literal"><span class="pre">Cython.Distutils.old_build_ext</span></code> and is now deprecated.</li>
+<li><code class="docutils literal"><span class="pre">directive_defaults</span></code> is no longer available in <code class="docutils literal"><span class="pre">Cython.Compiler.Options</span></code>,
+use <code class="docutils literal"><span class="pre">get_directive_defaults()</span></code> instead.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id29">
+<h2>0.24.1 (2016-07-15)<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id30">
+<h3>Bugs fixed<a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>IPython cell magic was lacking a good way to enable Python 3 code semantics.
+It can now be used as “%%cython -3”.</li>
+<li>Follow a recent change in <a class="reference external" href="https://www.python.org/dev/peps/pep-0492/">PEP 492</a>
+and CPython 3.5.2 that now requires the <code class="docutils literal"><span class="pre">__aiter__()</span></code> method of asynchronous
+iterators to be a simple <code class="docutils literal"><span class="pre">def</span></code> method instead of an <code class="docutils literal"><span class="pre">async</span> <span class="pre">def</span></code> method.</li>
+<li>Coroutines and generators were lacking the <code class="docutils literal"><span class="pre">__module__</span></code> special attribute.</li>
+<li>C++ <code class="docutils literal"><span class="pre">std::complex</span></code> values failed to auto-convert from and to Python complex
+objects.</li>
+<li>Namespaced C++ types could not be used as memory view types due to lack of
+name mangling.  Patch by Ivan Smirnov.</li>
+<li>Assignments between identical C++ types that were declared with differently
+typedefed template types could fail.</li>
+<li>Rebuilds could fail to evaluate dependency timestamps in C++ mode.
+Patch by Ian Henriksen.</li>
+<li>Macros defined in the <code class="docutils literal"><span class="pre">distutils</span></code> compiler option do not require values
+anymore.  Patch by Ian Henriksen.</li>
+<li>Minor fixes for MSVC, Cygwin and PyPy.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id31">
+<h2>0.24 (2016-04-04)<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id32">
+<h3>Features added<a class="headerlink" href="#id32" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><a class="reference external" href="https://www.python.org/dev/peps/pep-0498/">PEP 498</a>:
+Literal String Formatting (f-strings).
+Original patch by Jelle Zijlstra.</li>
+<li><a class="reference external" href="https://www.python.org/dev/peps/pep-0515/">PEP 515</a>:
+Underscores as visual separators in number literals.</li>
+<li>Parser was adapted to some minor syntax changes in Py3.6, e.g.
+<a class="reference external" href="https://bugs.python.org/issue9232">https://bugs.python.org/issue9232</a></li>
+<li>The embedded C code comments that show the original source code
+can be discarded with the new directive <code class="docutils literal"><span class="pre">emit_code_comments=False</span></code>.</li>
+<li>Cpdef enums are now first-class iterable, callable types in Python.</li>
+<li>Ctuples can now be declared in pure Python code.</li>
+<li>Posix declarations for DLL loading and stdio extensions were added.
+Patch by Lars Buitinck.</li>
+<li>The Py2-only builtins <code class="docutils literal"><span class="pre">unicode()</span></code>, <code class="docutils literal"><span class="pre">xrange()</span></code>, <code class="docutils literal"><span class="pre">reduce()</span></code> and
+<code class="docutils literal"><span class="pre">long</span></code> are now also available in compile time <code class="docutils literal"><span class="pre">DEF</span></code> expressions
+when compiling with Py3.</li>
+<li>Exception type tests have slightly lower overhead.
+This fixes ticket 868.</li>
+<li>&#64;property syntax fully supported in cdef classes, old syntax deprecated.</li>
+<li>C++ classes can now be declared with default template parameters.</li>
+</ul>
+</div>
+<div class="section" id="id33">
+<h3>Bugs fixed<a class="headerlink" href="#id33" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>C++ exceptions raised by overloaded C++ operators were not always
+handled.  Patch by Ian Henriksen.</li>
+<li>C string literals were previously always stored as non-const global
+variables in the module.  They are now stored as global constants
+when possible, and otherwise as non-const C string literals in the
+generated code that uses them.  This improves compatibility with
+strict C compiler options and prevents non-const strings literals
+with the same content from being incorrectly merged.</li>
+<li>Compile time evaluated <code class="docutils literal"><span class="pre">str</span></code> expressions (<code class="docutils literal"><span class="pre">DEF</span></code>) now behave in a
+more useful way by turning into Unicode strings when compiling under
+Python 3.  This allows using them as intermediate values in expressions.
+Previously, they always evaluated to bytes objects.</li>
+<li><code class="docutils literal"><span class="pre">isinf()</span></code> declarations in <code class="docutils literal"><span class="pre">libc/math.pxd</span></code> and <code class="docutils literal"><span class="pre">numpy/math.pxd</span></code> now
+reflect the actual tristate <code class="docutils literal"><span class="pre">int</span></code> return value instead of using <code class="docutils literal"><span class="pre">bint</span></code>.</li>
+<li>Literal assignments to ctuples avoid Python tuple round-trips in some
+more corner cases.</li>
+<li>Iteration over <code class="docutils literal"><span class="pre">dict(...).items()</span></code> failed to get optimised when dict
+arguments included keyword arguments.</li>
+<li>cProfile now correctly profiles cpdef functions and methods.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id34">
+<h2>0.23.5 (2016-03-26)<a class="headerlink" href="#id34" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Compile errors and warnings in integer type conversion code.  This fixes
+ticket 877.  Patches by Christian Neukirchen, Nikolaus Rath, Ian Henriksen.</li>
+<li>Reference leak when “<a href="#id35"><span class="problematic" id="id36">*</span></a>args” argument was reassigned in closures.</li>
+<li>Truth-testing Unicode strings could waste time and memory in Py3.3+.</li>
+<li>Return values of async functions could be ignored and replaced by <code class="docutils literal"><span class="pre">None</span></code>.</li>
+<li>Compiler crash in CPython 3.6.</li>
+<li>Fix prange() to behave identically to range().  The end condition was
+miscalculated when the range was not exactly divisible by the step.</li>
+<li>Optimised <code class="docutils literal"><span class="pre">all(genexpr)</span></code>/<code class="docutils literal"><span class="pre">any(genexpr)</span></code> calls could warn about unused
+code.  This fixes ticket 876.</li>
+</ul>
+</div>
+<div class="section" id="id37">
+<h2>0.23.4 (2015-10-10)<a class="headerlink" href="#id37" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id38">
+<h3>Bugs fixed<a class="headerlink" href="#id38" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Memory leak when calling Python functions in PyPy.</li>
+<li>Compilation problem with MSVC in C99-ish mode.</li>
+<li>Warning about unused values in a helper macro.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id39">
+<h2>0.23.3 (2015-09-29)<a class="headerlink" href="#id39" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id40">
+<h3>Bugs fixed<a class="headerlink" href="#id40" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Invalid C code for some builtin methods.  This fixes ticket 856 again.</li>
+<li>Incorrect C code in helper functions for PyLong conversion and string
+decoding.  This fixes ticket 863, ticket 864 and ticket 865.
+Original patch by Nikolaus Rath.</li>
+<li>Large folded or inserted integer constants could use too small C
+integer types and thus trigger a value wrap-around.</li>
+</ul>
+</div>
+<div class="section" id="id41">
+<h3>Other changes<a class="headerlink" href="#id41" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>The coroutine and generator types of Cython now also register directly
+with the <code class="docutils literal"><span class="pre">Coroutine</span></code> and <code class="docutils literal"><span class="pre">Generator</span></code> ABCs in the <code class="docutils literal"><span class="pre">backports_abc</span></code>
+module if it can be imported.  This fixes ticket 870.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id42">
+<h2>0.23.2 (2015-09-11)<a class="headerlink" href="#id42" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id43">
+<h3>Bugs fixed<a class="headerlink" href="#id43" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Compiler crash when analysing some optimised expressions.</li>
+<li>Coverage plugin was adapted to coverage.py 4.0 beta 2.</li>
+<li>C++ destructor calls could fail when ‘&amp;’ operator is overwritten.</li>
+<li>Incorrect C literal generation for large integers in compile-time
+evaluated DEF expressions and constant folded expressions.</li>
+<li>Byte string constants could end up as Unicode strings when originating
+from compile-time evaluated DEF expressions.</li>
+<li>Invalid C code when caching known builtin methods.
+This fixes ticket 860.</li>
+<li><code class="docutils literal"><span class="pre">ino_t</span></code> in <code class="docutils literal"><span class="pre">posix.types</span></code> was not declared as <code class="docutils literal"><span class="pre">unsigned</span></code>.</li>
+<li>Declarations in <code class="docutils literal"><span class="pre">libcpp/memory.pxd</span></code> were missing <code class="docutils literal"><span class="pre">operator!()</span></code>.
+Patch by Leo Razoumov.</li>
+<li>Static cdef methods can now be declared in .pxd files.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id44">
+<h2>0.23.1 (2015-08-22)<a class="headerlink" href="#id44" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id45">
+<h3>Bugs fixed<a class="headerlink" href="#id45" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Invalid C code for generators.  This fixes ticket 858.</li>
+<li>Invalid C code for some builtin methods.  This fixes ticket 856.</li>
+<li>Invalid C code for unused local buffer variables.
+This fixes ticket 154.</li>
+<li>Test failures on 32bit systems.  This fixes ticket 857.</li>
+<li>Code that uses <code class="docutils literal"><span class="pre">from</span> <span class="pre">xyz</span> <span class="pre">import</span> <span class="pre">*</span></code> and global C struct/union/array
+variables could fail to compile due to missing helper functions.
+This fixes ticket 851.</li>
+<li>Misnamed PEP 492 coroutine property <code class="docutils literal"><span class="pre">cr_yieldfrom</span></code> renamed to
+<code class="docutils literal"><span class="pre">cr_await</span></code> to match CPython.</li>
+<li>Missing deallocation code for C++ object attributes in certain
+extension class hierarchies.</li>
+<li>Crash when async coroutine was not awaited.</li>
+<li>Compiler crash on <code class="docutils literal"><span class="pre">yield</span></code> in signature annotations and default
+argument values.  Both are forbidden now.</li>
+<li>Compiler crash on certain constructs in <code class="docutils literal"><span class="pre">finally</span></code> clauses.</li>
+<li>Cython failed to build when CPython’s pgen is installed.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id46">
+<h2>0.23 (2015-08-08)<a class="headerlink" href="#id46" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id47">
+<h3>Features added<a class="headerlink" href="#id47" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><a class="reference external" href="https://www.python.org/dev/peps/pep-0492/">PEP 492</a>
+(async/await) was implemented.</li>
+<li><a class="reference external" href="https://www.python.org/dev/peps/pep-0448/">PEP 448</a>
+(Additional Unpacking Generalizations) was implemented.</li>
+<li>Support for coverage.py 4.0+ can be enabled by adding the plugin
+“Cython.Coverage” to the “.coveragerc” config file.</li>
+<li>Annotated HTML source pages can integrate (XML) coverage reports.</li>
+<li>Tracing is supported in <code class="docutils literal"><span class="pre">nogil</span></code> functions/sections and module init code.</li>
+<li>When generators are used in a Cython module and the module imports the
+modules “inspect” and/or “asyncio”, Cython enables interoperability by
+patching these modules during the import to recognise Cython’s internal
+generator and coroutine types. This can be disabled by C compiling the
+module with “-D CYTHON_PATCH_ASYNCIO=0” or “-D CYTHON_PATCH_INSPECT=0”</li>
+<li>When generators or coroutines are used in a Cython module, their types
+are registered with the <code class="docutils literal"><span class="pre">Generator</span></code> and <code class="docutils literal"><span class="pre">Coroutine</span></code> ABCs in the
+<code class="docutils literal"><span class="pre">collections</span></code> or <code class="docutils literal"><span class="pre">collections.abc</span></code> stdlib module at import time to
+enable interoperability with code that needs to detect and process Python
+generators/coroutines.  These ABCs were added in CPython 3.5 and are
+available for older Python versions through the <code class="docutils literal"><span class="pre">backports_abc</span></code> module
+on PyPI.  See <a class="reference external" href="https://bugs.python.org/issue24018">https://bugs.python.org/issue24018</a></li>
+<li>Adding/subtracting/dividing/modulus and equality comparisons with
+constant Python floats and small integers are faster.</li>
+<li>Binary and/or/xor/rshift operations with small constant Python integers
+are faster.</li>
+<li>When called on generator expressions, the builtins <code class="docutils literal"><span class="pre">all()</span></code>, <code class="docutils literal"><span class="pre">any()</span></code>,
+<code class="docutils literal"><span class="pre">dict()</span></code>, <code class="docutils literal"><span class="pre">list()</span></code>, <code class="docutils literal"><span class="pre">set()</span></code>, <code class="docutils literal"><span class="pre">sorted()</span></code> and <code class="docutils literal"><span class="pre">unicode.join()</span></code>
+avoid the generator iteration overhead by inlining a part of their
+functionality into the for-loop.</li>
+<li>Keyword argument dicts are no longer copied on function entry when they
+are not being used or only passed through to other function calls (e.g.
+in wrapper functions).</li>
+<li>The <code class="docutils literal"><span class="pre">PyTypeObject</span></code> declaration in <code class="docutils literal"><span class="pre">cpython.object</span></code> was extended.</li>
+<li>The builtin <code class="docutils literal"><span class="pre">type</span></code> type is now declared as PyTypeObject in source,
+allowing for extern functions taking type parameters to have the correct
+C signatures.  Note that this might break code that uses <code class="docutils literal"><span class="pre">type</span></code> just
+for passing around Python types in typed variables.  Removing the type
+declaration provides a backwards compatible fix.</li>
+<li><code class="docutils literal"><span class="pre">wraparound()</span></code> and <code class="docutils literal"><span class="pre">boundscheck()</span></code> are available as no-ops in pure
+Python mode.</li>
+<li>Const iterators were added to the provided C++ STL declarations.</li>
+<li>Smart pointers were added to the provided C++ STL declarations.
+Patch by Daniel Filonik.</li>
+<li><code class="docutils literal"><span class="pre">NULL</span></code> is allowed as default argument when embedding signatures.
+This fixes ticket 843.</li>
+<li>When compiling with <code class="docutils literal"><span class="pre">--embed</span></code>, the internal module name is changed to
+<code class="docutils literal"><span class="pre">__main__</span></code> to allow arbitrary program names, including those that would
+be invalid for modules.  Note that this prevents reuse of the generated
+C code as an importable module.</li>
+<li>External C++ classes that overload the assignment operator can be used.
+Patch by Ian Henriksen.</li>
+<li>Support operator bool() for C++ classes so they can be used in if statements.</li>
+</ul>
+</div>
+<div class="section" id="id49">
+<h3>Bugs fixed<a class="headerlink" href="#id49" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Calling “yield from” from Python on a Cython generator that returned a
+value triggered a crash in CPython.  This is now being worked around.
+See <a class="reference external" href="https://bugs.python.org/issue23996">https://bugs.python.org/issue23996</a></li>
+<li>Language level 3 did not enable true division (a.k.a. float division)
+for integer operands.</li>
+<li>Functions with fused argument types that included a generic ‘object’
+fallback could end up using that fallback also for other explicitly
+listed object types.</li>
+<li>Relative cimports could accidentally fall back to trying an absolute
+cimport on failure.</li>
+<li>The result of calling a C struct constructor no longer requires an
+intermediate assignment when coercing to a Python dict.</li>
+<li>C++ exception declarations with mapping functions could fail to compile
+when pre-declared in .pxd files.</li>
+<li><code class="docutils literal"><span class="pre">cpdef</span> <span class="pre">void</span></code> methods are now permitted.</li>
+<li><code class="docutils literal"><span class="pre">abs(cint)</span></code> could fail to compile in MSVC and used sub-optimal code
+in C++.  Patch by David Vierra, original patch by Michael Enßlin.</li>
+<li>Buffer index calculations using index variables with small C integer
+types could overflow for large buffer sizes.
+Original patch by David Vierra.</li>
+<li>C unions use a saner way to coerce from and to Python dicts.</li>
+<li>When compiling a module <code class="docutils literal"><span class="pre">foo.pyx</span></code>, the directories in <code class="docutils literal"><span class="pre">sys.path</span></code>
+are no longer searched when looking for <code class="docutils literal"><span class="pre">foo.pxd</span></code>.
+Patch by Jeroen Demeyer.</li>
+<li>Memory leaks in the embedding main function were fixed.
+Original patch by Michael Enßlin.</li>
+<li>Some complex Python expressions could fail to compile inside of finally
+clauses.</li>
+<li>Unprefixed ‘str’ literals were not supported as C varargs arguments.</li>
+<li>Fixed type errors in conversion enum types to/from Python.  Note that
+this imposes stricter correctness requirements on enum declarations.</li>
+</ul>
+</div>
+<div class="section" id="id50">
+<h3>Other changes<a class="headerlink" href="#id50" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Changed mangling scheme in header files generated by <code class="docutils literal"><span class="pre">cdef</span> <span class="pre">api</span></code>
+declarations.</li>
+<li>Installation under CPython 3.3+ no longer requires a pass of the
+2to3 tool.  This also makes it possible to run Cython in Python
+3.3+ from a source checkout without installing it first.
+Patch by Petr Viktorin.</li>
+<li><code class="docutils literal"><span class="pre">jedi-typer.py</span></code> (in <code class="docutils literal"><span class="pre">Tools/</span></code>) was extended and renamed to
+<code class="docutils literal"><span class="pre">jedityper.py</span></code> (to make it importable) and now works with and
+requires Jedi 0.9.  Patch by Tzer-jen Wei.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id51">
+<h2>0.22.1 (2015-06-20)<a class="headerlink" href="#id51" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id52">
+<h3>Bugs fixed<a class="headerlink" href="#id52" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Crash when returning values on generator termination.</li>
+<li>In some cases, exceptions raised during internal isinstance() checks were
+not propagated.</li>
+<li>Runtime reported file paths of source files (e.g for profiling and tracing)
+are now relative to the build root directory instead of the main source file.</li>
+<li>Tracing exception handling code could enter the trace function with an active
+exception set.</li>
+<li>The internal generator function type was not shared across modules.</li>
+<li>Comparisons of (inferred) ctuples failed to compile.</li>
+<li>Closures inside of cdef functions returning <code class="docutils literal"><span class="pre">void</span></code> failed to compile.</li>
+<li>Using <code class="docutils literal"><span class="pre">const</span></code> C++ references in intermediate parts of longer expressions
+could fail to compile.</li>
+<li>C++ exception declarations with mapping functions could fail to compile when
+pre-declared in .pxd files.</li>
+<li>C++ compilation could fail with an ambiguity error in recent MacOS-X Xcode
+versions.</li>
+<li>C compilation could fail in pypy3.</li>
+<li>Fixed a memory leak in the compiler when compiling multiple modules.</li>
+<li>When compiling multiple modules, external library dependencies could leak
+into later compiler runs.  Fix by Jeroen Demeyer.  This fixes ticket 845.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id53">
+<h2>0.22 (2015-02-11)<a class="headerlink" href="#id53" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id54">
+<h3>Features added<a class="headerlink" href="#id54" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>C functions can coerce to Python functions, which allows passing them
+around as callable objects.</li>
+<li>C arrays can be assigned by value and auto-coerce from Python iterables
+and to Python lists (and tuples).</li>
+<li>Extern C functions can now be declared as cpdef to export them to
+the module’s Python namespace.  Extern C functions in pxd files export
+their values to their own module, iff it exists.</li>
+<li>Anonymous C tuple types can be declared as (ctype1, ctype2, …).</li>
+<li><a class="reference external" href="https://www.python.org/dev/peps/pep-0479/">PEP 479</a>:
+turn accidental StopIteration exceptions that exit generators
+into a RuntimeError, activated with future import “generator_stop”.</li>
+<li>Looping over <code class="docutils literal"><span class="pre">reversed(range())</span></code> is optimised in the same way as
+<code class="docutils literal"><span class="pre">range()</span></code>.  Patch by Favian Contreras.</li>
+</ul>
+</div>
+<div class="section" id="id55">
+<h3>Bugs fixed<a class="headerlink" href="#id55" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Mismatching ‘except’ declarations on signatures in .pxd and .pyx files failed
+to produce a compile error.</li>
+<li>Failure to find any files for the path pattern(s) passed into <code class="docutils literal"><span class="pre">cythonize()</span></code>
+is now an error to more easily detect accidental typos.</li>
+<li>The <code class="docutils literal"><span class="pre">logaddexp</span></code> family of functions in <code class="docutils literal"><span class="pre">numpy.math</span></code> now has correct
+declarations.</li>
+<li>In Py2.6/7 and Py3.2, simple Cython memory views could accidentally be
+interpreted as non-contiguous by CPython, which could trigger a CPython
+bug when copying data from them, thus leading to data corruption.
+See CPython issues 12834 and 23349.</li>
+</ul>
+</div>
+<div class="section" id="id56">
+<h3>Other changes<a class="headerlink" href="#id56" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Preliminary support for defining the Cython language with a formal grammar.
+To try parsing your files against this grammar, use the –formal_grammar directive.
+Experimental.</li>
+<li><code class="docutils literal"><span class="pre">_</span></code> is no longer considered a cacheable builtin as it could interfere with
+gettext.</li>
+<li>Cythonize-computed metadata now cached in the generated C files.</li>
+<li>Several corrections and extensions in numpy, cpython, and libcpp pxd files.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id57">
+<h2>0.21.2 (2014-12-27)<a class="headerlink" href="#id57" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id58">
+<h3>Bugs fixed<a class="headerlink" href="#id58" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Crash when assigning a C value to both a Python and C target at the same time.</li>
+<li>Automatic coercion from C++ strings to <code class="docutils literal"><span class="pre">str</span></code> generated incomplete code that
+failed to compile.</li>
+<li>Declaring a constructor in a C++ child class erroneously required a default
+constructor declaration in the super class.</li>
+<li><code class="docutils literal"><span class="pre">resize_smart()</span></code> in <code class="docutils literal"><span class="pre">cpython.array</span></code> was broken.</li>
+<li>Functions in <code class="docutils literal"><span class="pre">libcpp.cast</span></code> are now declared as <code class="docutils literal"><span class="pre">nogil</span></code>.</li>
+<li>Some missing C-API declarations were added.</li>
+<li>Py3 main code in embedding program code was lacking casts.</li>
+<li>Exception related to distutils “Distribution” class type in pyximport under
+latest CPython 2.7 and 3.4 releases when setuptools is being imported later.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id59">
+<h2>0.21.1 (2014-10-18)<a class="headerlink" href="#id59" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id60">
+<h3>Features added<a class="headerlink" href="#id60" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>New <code class="docutils literal"><span class="pre">cythonize</span></code> option <code class="docutils literal"><span class="pre">-a</span></code> to generate the annotated HTML source view.</li>
+<li>Missing C-API declarations in <code class="docutils literal"><span class="pre">cpython.unicode</span></code> were added.</li>
+<li>Passing <code class="docutils literal"><span class="pre">language='c++'</span></code> into cythonize() globally enables C++ mode for
+all modules that were not passed as Extension objects (i.e. only source
+files and file patterns).</li>
+<li><code class="docutils literal"><span class="pre">Py_hash_t</span></code> is a known type (used in CPython for hash values).</li>
+<li><code class="docutils literal"><span class="pre">PySlice_*()</span></code> C-API functions are available from the <code class="docutils literal"><span class="pre">cpython.slice</span></code>
+module.</li>
+<li>Allow arrays of C++ classes.</li>
+</ul>
+</div>
+<div class="section" id="id61">
+<h3>Bugs fixed<a class="headerlink" href="#id61" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Reference leak for non-simple Python expressions in boolean and/or expressions.</li>
+<li>To fix a name collision and to reflect availability on host platforms,
+standard C declarations [ clock(), time(), struct tm and tm* functions ]
+were moved from posix/time.pxd to a new libc/time.pxd.  Patch by Charles
+Blake.</li>
+<li>Rerunning unmodified modules in IPython’s cython support failed.
+Patch by Matthias Bussonier.</li>
+<li>Casting C++ <code class="docutils literal"><span class="pre">std::string</span></code> to Python byte strings failed when
+auto-decoding was enabled.</li>
+<li>Fatal exceptions in global module init code could lead to crashes
+if the already created module was used later on (e.g. through a
+stale reference in sys.modules or elsewhere).</li>
+<li><code class="docutils literal"><span class="pre">cythonize.py</span></code> script was not installed on MS-Windows.</li>
+</ul>
+</div>
+<div class="section" id="id62">
+<h3>Other changes<a class="headerlink" href="#id62" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Compilation no longer fails hard when unknown compilation options are
+passed.  Instead, it raises a warning and ignores them (as it did silently
+before 0.21).  This will be changed back to an error in a future release.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id63">
+<h2>0.21 (2014-09-10)<a class="headerlink" href="#id63" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id64">
+<h3>Features added<a class="headerlink" href="#id64" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>C (cdef) functions allow inner Python functions.</li>
+<li>Enums can now be declared as cpdef to export their values to
+the module’s Python namespace.  Cpdef enums in pxd files export
+their values to their own module, iff it exists.</li>
+<li>Allow &#64;staticmethod decorator to declare static cdef methods.
+This is especially useful for declaring “constructors” for
+cdef classes that can take non-Python arguments.</li>
+<li>Taking a <code class="docutils literal"><span class="pre">char*</span></code> from a temporary Python string object is safer
+in more cases and can be done inside of non-trivial expressions,
+including arguments of a function call.  A compile time error
+is raised only when such a pointer is assigned to a variable and
+would thus exceed the lifetime of the string itself.</li>
+<li>Generators have new properties <code class="docutils literal"><span class="pre">__name__</span></code> and <code class="docutils literal"><span class="pre">__qualname__</span></code>
+that provide the plain/qualified name of the generator function
+(following CPython 3.5).  See <a class="reference external" href="http://bugs.python.org/issue21205">http://bugs.python.org/issue21205</a></li>
+<li>The <code class="docutils literal"><span class="pre">inline</span></code> function modifier is available as a decorator
+<code class="docutils literal"><span class="pre">&#64;cython.inline</span></code> in pure mode.</li>
+<li>When cygdb is run in a virtualenv, it enables the same virtualenv
+inside of the debugger. Patch by Marc Abramowitz.</li>
+<li>PEP 465: dedicated infix operator for matrix multiplication (A &#64; B).</li>
+<li>HTML output of annotated code uses Pygments for code highlighting
+and generally received a major overhaul by Matthias Bussonier.</li>
+<li>IPython magic support is now available directly from Cython with
+the command “%load_ext cython”.  Cython code can directly be
+executed in a cell when marked with “%%cython”.  Code analysis
+is available with “%%cython -a”.  Patch by Martín Gaitán.</li>
+<li>Simple support for declaring Python object types in Python signature
+annotations.  Currently requires setting the compiler directive
+<code class="docutils literal"><span class="pre">annotation_typing=True</span></code>.</li>
+<li>New directive <code class="docutils literal"><span class="pre">use_switch</span></code> (defaults to True) to optionally disable
+the optimization of chained if statement to C switch statements.</li>
+<li>Defines dynamic_cast et al. in <code class="docutils literal"><span class="pre">libcpp.cast</span></code> and C++ heap data
+structure operations in <code class="docutils literal"><span class="pre">libcpp.algorithm</span></code>.</li>
+<li>Shipped header declarations in <code class="docutils literal"><span class="pre">posix.*</span></code> were extended to cover
+more of the POSIX API.  Patches by Lars Buitinck and Mark Peek.</li>
+</ul>
+</div>
+<div class="section" id="optimizations">
+<h3>Optimizations<a class="headerlink" href="#optimizations" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Simple calls to C implemented Python functions/methods are faster.
+This also speeds up many operations on builtins that Cython cannot
+otherwise optimise.</li>
+<li>The “and”/”or” operators try to avoid unnecessary coercions of their
+arguments.  They now evaluate the truth value of each argument
+independently and only coerce the final result of the whole expression
+to the target type (e.g. the type on the left side of an assignment).
+This also avoids reference counting overhead for Python values during
+evaluation and generally improves the code flow in the generated C code.</li>
+<li>The Python expression “2 ** N” is optimised into bit shifting.
+See <a class="reference external" href="http://bugs.python.org/issue21420">http://bugs.python.org/issue21420</a></li>
+<li>Cascaded assignments (a = b = …) try to minimise the number of
+type coercions.</li>
+<li>Calls to <code class="docutils literal"><span class="pre">slice()</span></code> are translated to a straight C-API call.</li>
+</ul>
+</div>
+<div class="section" id="id65">
+<h3>Bugs fixed<a class="headerlink" href="#id65" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Crash when assigning memory views from ternary conditional expressions.</li>
+<li>Nested C++ templates could lead to unseparated “&gt;&gt;” characters being
+generated into the C++ declarations, which older C++ compilers could
+not parse.</li>
+<li>Sending SIGINT (Ctrl-C) during parallel cythonize() builds could
+hang the child processes.</li>
+<li>No longer ignore local setup.cfg files for distutils in pyximport.
+Patch by Martin Teichmann.</li>
+<li>Taking a <code class="docutils literal"><span class="pre">char*</span></code> from an indexed Python string generated unsafe
+reference counting code.</li>
+<li>Set literals now create all of their items before trying to add them
+to the set, following the behaviour in CPython.  This makes a
+difference in the rare case that the item creation has side effects
+and some items are not hashable (or if hashing them has side effects,
+too).</li>
+<li>Cython no longer generates the cross product of C functions for code
+that uses memory views of fused types in function signatures (e.g.
+<code class="docutils literal"><span class="pre">cdef</span> <span class="pre">func(floating[:]</span> <span class="pre">a,</span> <span class="pre">floating[:]</span> <span class="pre">b)</span></code>).  This is considered the
+expected behaviour by most users and was previously inconsistent with
+other structured types like C arrays.  Code that really wants all type
+combinations can create the same fused memoryview type under different
+names and use those in the signature to make it clear which types are
+independent.</li>
+<li>Names that were unknown at compile time were looked up as builtins at
+runtime but not as global module names.  Trying both lookups helps with
+globals() manipulation.</li>
+<li>Fixed stl container conversion for typedef element types.</li>
+<li><code class="docutils literal"><span class="pre">obj.pop(x)</span></code> truncated large C integer values of x to <code class="docutils literal"><span class="pre">Py_ssize_t</span></code>.</li>
+<li><code class="docutils literal"><span class="pre">__init__.pyc</span></code> is recognised as marking a package directory
+(in addition to .py, .pyx and .pxd).</li>
+<li>Syntax highlighting in <code class="docutils literal"><span class="pre">cython-mode.el</span></code> for Emacs no longer
+incorrectly highlights keywords found as part of longer names.</li>
+<li>Correctly handle <code class="docutils literal"><span class="pre">from</span> <span class="pre">cython.submodule</span> <span class="pre">cimport</span> <span class="pre">name</span></code>.</li>
+<li>Fix infinite recursion when using super with cpdef methods.</li>
+<li>No-args <code class="docutils literal"><span class="pre">dir()</span></code> was not guaranteed to return a sorted list.</li>
+</ul>
+</div>
+<div class="section" id="id66">
+<h3>Other changes<a class="headerlink" href="#id66" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>The header line in the generated C files no longer contains the
+timestamp but only the Cython version that wrote it.  This was
+changed to make builds more reproducible.</li>
+<li>Removed support for CPython 2.4, 2.5 and 3.1.</li>
+<li>The licensing implications on the generated code were clarified
+to avoid legal constraints for users.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id67">
+<h2>0.20.2 (2014-06-16)<a class="headerlink" href="#id67" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id68">
+<h3>Features added<a class="headerlink" href="#id68" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Some optimisations for set/frozenset instantiation.</li>
+<li>Support for C++ unordered_set and unordered_map.</li>
+</ul>
+</div>
+<div class="section" id="id69">
+<h3>Bugs fixed<a class="headerlink" href="#id69" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Access to attributes of optimised builtin methods (e.g.
+<code class="docutils literal"><span class="pre">[].append.__name__</span></code>) could fail to compile.</li>
+<li>Memory leak when extension subtypes add a memory view as attribute
+to those of the parent type without having Python object attributes
+or a user provided dealloc method.</li>
+<li>Compiler crash on readonly properties in “binding” mode.</li>
+<li>Auto-encoding with <code class="docutils literal"><span class="pre">c_string_encoding=ascii</span></code> failed in Py3.3.</li>
+<li>Crash when subtyping freelist enabled Cython extension types with
+Python classes that use <code class="docutils literal"><span class="pre">__slots__</span></code>.</li>
+<li>Freelist usage is restricted to CPython to avoid problems with other
+Python implementations.</li>
+<li>Memory leak in memory views when copying overlapping, contiguous slices.</li>
+<li>Format checking when requesting non-contiguous buffers from
+<code class="docutils literal"><span class="pre">cython.array</span></code> objects was accidentally omitted in Py3.</li>
+<li>C++ destructor calls in extension types could fail to compile in clang.</li>
+<li>Buffer format validation failed for sequences of strings in structs.</li>
+<li>Docstrings on extension type attributes in .pxd files were rejected.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id70">
+<h2>0.20.1 (2014-02-11)<a class="headerlink" href="#id70" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id71">
+<h3>Bugs fixed<a class="headerlink" href="#id71" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Build error under recent MacOS-X versions where <code class="docutils literal"><span class="pre">isspace()</span></code> could not be
+resolved by clang.</li>
+<li>List/Tuple literals multiplied by more than one factor were only multiplied
+by the last factor instead of all.</li>
+<li>Lookups of special methods (specifically for context managers) could fail
+in Python &lt;= 2.6/3.1.</li>
+<li>Local variables were erroneously appended to the signature introspection
+of Cython implemented functions with keyword-only arguments under Python 3.</li>
+<li>In-place assignments to variables with inferred Python builtin/extension
+types could fail with type errors if the result value type was incompatible
+with the type of the previous value.</li>
+<li>The C code generation order of cdef classes, closures, helper code,
+etc. was not deterministic, thus leading to high code churn.</li>
+<li>Type inference could fail to deduce C enum types.</li>
+<li>Type inference could deduce unsafe or inefficient types from integer
+assignments within a mix of inferred Python variables and integer
+variables.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id72">
+<h2>0.20 (2014-01-18)<a class="headerlink" href="#id72" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id73">
+<h3>Features added<a class="headerlink" href="#id73" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Support for CPython 3.4.</li>
+<li>Support for calling C++ template functions.</li>
+<li><code class="docutils literal"><span class="pre">yield</span></code> is supported in <code class="docutils literal"><span class="pre">finally</span></code> clauses.</li>
+<li>The C code generated for finally blocks is duplicated for each exit
+case to allow for better optimisations by the C compiler.</li>
+<li>Cython tries to undo the Python optimisationism of assigning a bound
+method to a local variable when it can generate better code for the
+direct call.</li>
+<li>Constant Python float values are cached.</li>
+<li>String equality comparisons can use faster type specific code in
+more cases than before.</li>
+<li>String/Unicode formatting using the ‘%’ operator uses a faster
+C-API call.</li>
+<li><code class="docutils literal"><span class="pre">bytearray</span></code> has become a known type and supports coercion from and
+to C strings.  Indexing, slicing and decoding is optimised. Note that
+this may have an impact on existing code due to type inference.</li>
+<li>Using <code class="docutils literal"><span class="pre">cdef</span> <span class="pre">basestring</span> <span class="pre">stringvar</span></code> and function arguments typed as
+<code class="docutils literal"><span class="pre">basestring</span></code> is now meaningful and allows assigning exactly
+<code class="docutils literal"><span class="pre">str</span></code> and <code class="docutils literal"><span class="pre">unicode</span></code> objects, but no subtypes of these types.</li>
+<li>Support for the <code class="docutils literal"><span class="pre">__debug__</span></code> builtin.</li>
+<li>Assertions in Cython compiled modules are disabled if the running
+Python interpreter was started with the “-O” option.</li>
+<li>Some types that Cython provides internally, such as functions and
+generators, are now shared across modules if more than one Cython
+implemented module is imported.</li>
+<li>The type inference algorithm works more fine granular by taking the
+results of the control flow analysis into account.</li>
+<li>A new script in <code class="docutils literal"><span class="pre">bin/cythonize</span></code> provides a command line frontend
+to the cythonize() compilation function (including distutils build).</li>
+<li>The new extension type decorator <code class="docutils literal"><span class="pre">&#64;cython.no_gc_clear</span></code> prevents
+objects from being cleared during cyclic garbage collection, thus
+making sure that object attributes are kept alive until deallocation.</li>
+<li>During cyclic garbage collection, attributes of extension types that
+cannot create reference cycles due to their type (e.g. strings) are
+no longer considered for traversal or clearing.  This can reduce the
+processing overhead when searching for or cleaning up reference cycles.</li>
+<li>Package compilation (i.e. <code class="docutils literal"><span class="pre">__init__.py</span></code> files) now works, starting
+with Python 3.3.</li>
+<li>The cython-mode.el script for Emacs was updated.  Patch by Ivan Andrus.</li>
+<li>An option common_utility_include_dir was added to cythonize() to save
+oft-used utility code once in a separate directory rather than as
+part of each generated file.</li>
+<li><code class="docutils literal"><span class="pre">unraisable_tracebacks</span></code> directive added to control printing of
+tracebacks of unraisable exceptions.</li>
+</ul>
+</div>
+<div class="section" id="id74">
+<h3>Bugs fixed<a class="headerlink" href="#id74" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Abstract Python classes that subtyped a Cython extension type
+failed to raise an exception on instantiation, and thus ended
+up being instantiated.</li>
+<li><code class="docutils literal"><span class="pre">set.add(a_tuple)</span></code> and <code class="docutils literal"><span class="pre">set.discard(a_tuple)</span></code> failed with a
+TypeError in Py2.4.</li>
+<li>The PEP 3155 <code class="docutils literal"><span class="pre">__qualname__</span></code> was incorrect for nested classes and
+inner classes/functions declared as <code class="docutils literal"><span class="pre">global</span></code>.</li>
+<li>Several corner cases in the try-finally statement were fixed.</li>
+<li>The metaclass of a Python class was not inherited from its parent
+class(es).  It is now extracted from the list of base classes if not
+provided explicitly using the Py3 <code class="docutils literal"><span class="pre">metaclass</span></code> keyword argument.
+In Py2 compilation mode, a <code class="docutils literal"><span class="pre">__metaclass__</span></code> entry in the class
+dict will still take precedence if not using Py3 metaclass syntax,
+but only <em>after</em> creating the class dict (which may have been done
+by a metaclass of a base class, see PEP 3115).  It is generally
+recommended to use the explicit Py3 syntax to define metaclasses
+for Python types at compile time.</li>
+<li>The automatic C switch statement generation behaves more safely for
+heterogeneous value types (e.g. mixing enum and char), allowing for
+a slightly wider application and reducing corner cases.  It now always
+generates a ‘default’ clause to avoid C compiler warnings about
+unmatched enum values.</li>
+<li>Fixed a bug where class hierarchies declared out-of-order could result
+in broken generated code.</li>
+<li>Fixed a bug which prevented overriding const methods of C++ classes.</li>
+<li>Fixed a crash when converting Python objects to C++ strings fails.</li>
+</ul>
+</div>
+<div class="section" id="id75">
+<h3>Other changes<a class="headerlink" href="#id75" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>In Py3 compilation mode, Python2-style metaclasses declared by a
+<code class="docutils literal"><span class="pre">__metaclass__</span></code> class dict entry are ignored.</li>
+<li>In Py3.4+, the Cython generator type uses <code class="docutils literal"><span class="pre">tp_finalize()</span></code> for safer
+cleanup instead of <code class="docutils literal"><span class="pre">tp_del()</span></code>.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id76">
+<h2>0.19.2 (2013-10-13)<a class="headerlink" href="#id76" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id77">
+<h3>Features added<a class="headerlink" href="#id77" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id78">
+<h3>Bugs fixed<a class="headerlink" href="#id78" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Some standard declarations were fixed or updated, including the previously
+incorrect declaration of <code class="docutils literal"><span class="pre">PyBuffer_FillInfo()</span></code> and some missing bits in
+<code class="docutils literal"><span class="pre">libc.math</span></code>.</li>
+<li>Heap allocated subtypes of <code class="docutils literal"><span class="pre">type</span></code> used the wrong base type struct at the
+C level.</li>
+<li>Calling the unbound method dict.keys/value/items() in dict subtypes could
+call the bound object method instead of the unbound supertype method.</li>
+<li>“yield” wasn’t supported in “return” value expressions.</li>
+<li>Using the “bint” type in memory views lead to unexpected results.
+It is now an error.</li>
+<li>Assignments to global/closure variables could catch them in an illegal state
+while deallocating the old value.</li>
+</ul>
+</div>
+<div class="section" id="id79">
+<h3>Other changes<a class="headerlink" href="#id79" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="id80">
+<h2>0.19.1 (2013-05-11)<a class="headerlink" href="#id80" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id81">
+<h3>Features added<a class="headerlink" href="#id81" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Completely empty C-API structs for extension type slots (protocols like
+number/mapping/sequence) are no longer generated into the C code.</li>
+<li>Docstrings that directly follow a public/readonly attribute declaration
+in a cdef class will be used as docstring of the auto-generated property.
+This fixes ticket 206.</li>
+<li>The automatic signature documentation tries to preserve more semantics
+of default arguments and argument types.  Specifically, <code class="docutils literal"><span class="pre">bint</span></code> arguments
+now appear as type <code class="docutils literal"><span class="pre">bool</span></code>.</li>
+<li>A warning is emitted when negative literal indices are found inside of
+a code section that disables <code class="docutils literal"><span class="pre">wraparound</span></code> handling.  This helps with
+fixing invalid code that might fail in the face of future compiler
+optimisations.</li>
+<li>Constant folding for boolean expressions (and/or) was improved.</li>
+<li>Added a build_dir option to cythonize() which allows one to place
+the generated .c files outside the source tree.</li>
+</ul>
+</div>
+<div class="section" id="id82">
+<h3>Bugs fixed<a class="headerlink" href="#id82" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">isinstance(X,</span> <span class="pre">type)</span></code> failed to get optimised into a call to
+<code class="docutils literal"><span class="pre">PyType_Check()</span></code>, as done for other builtin types.</li>
+<li>A spurious <code class="docutils literal"><span class="pre">from</span> <span class="pre">datetime</span> <span class="pre">cimport</span> <span class="pre">*</span></code> was removed from the “cpython”
+declaration package. This means that the “datetime” declarations
+(added in 0.19) are no longer available directly from the “cpython”
+namespace, but only from “cpython.datetime”. This is the correct
+way of doing it because the declarations refer to a standard library
+module, not the core CPython C-API itself.</li>
+<li>The C code for extension types is now generated in topological order
+instead of source code order to avoid C compiler errors about missing
+declarations for subtypes that are defined before their parent.</li>
+<li>The <code class="docutils literal"><span class="pre">memoryview</span></code> type name no longer shows up in the module dict of
+modules that use memory views.  This fixes trac ticket 775.</li>
+<li>Regression in 0.19 that rejected valid C expressions from being used
+in C array size declarations.</li>
+<li>In C++ mode, the C99-only keyword <code class="docutils literal"><span class="pre">restrict</span></code> could accidentally be
+seen by the GNU C++ compiler. It is now specially handled for both
+GCC and MSVC.</li>
+<li>Testing large (&gt; int) C integer values for their truth value could fail
+due to integer wrap-around.</li>
+</ul>
+</div>
+<div class="section" id="id83">
+<h3>Other changes<a class="headerlink" href="#id83" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="id84">
+<h2>0.19 (2013-04-19)<a class="headerlink" href="#id84" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id85">
+<h3>Features added<a class="headerlink" href="#id85" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>New directives <code class="docutils literal"><span class="pre">c_string_type</span></code> and <code class="docutils literal"><span class="pre">c_string_encoding</span></code> to more easily
+and automatically convert between C strings and the different Python string
+types.</li>
+<li>The extension type flag <code class="docutils literal"><span class="pre">Py_TPFLAGS_HAVE_VERSION_TAG</span></code> is enabled by default
+on extension types and can be disabled using the <code class="docutils literal"><span class="pre">type_version_tag</span></code> compiler
+directive.</li>
+<li>EXPERIMENTAL support for simple Cython code level line tracing.  Enabled by
+the “linetrace” compiler directive.</li>
+<li>Cython implemented functions make their argument and return type annotations
+available through the <code class="docutils literal"><span class="pre">__annotations__</span></code> attribute (PEP 3107).</li>
+<li>Access to non-cdef module globals and Python object attributes is faster.</li>
+<li><code class="docutils literal"><span class="pre">Py_UNICODE*</span></code> coerces from and to Python unicode strings.  This is
+helpful when talking to Windows APIs, which use compatible wchar_t
+arrays for strings.  Note that the <code class="docutils literal"><span class="pre">Py_UNICODE</span></code> type is otherwise
+deprecated as of CPython 3.3.</li>
+<li><code class="docutils literal"><span class="pre">isinstance(obj,</span> <span class="pre">basestring)</span></code> is optimised.  In Python 3 it only tests
+for instances of <code class="docutils literal"><span class="pre">str</span></code> (i.e. Py2 <code class="docutils literal"><span class="pre">unicode</span></code>).</li>
+<li>The <code class="docutils literal"><span class="pre">basestring</span></code> builtin is mapped to <code class="docutils literal"><span class="pre">str</span></code> (i.e. Py2 <code class="docutils literal"><span class="pre">unicode</span></code>) when
+compiling the generated C code under Python 3.</li>
+<li>Closures use freelists, which can speed up their creation quite substantially.
+This is also visible for short running generator expressions, for example.</li>
+<li>A new class decorator <code class="docutils literal"><span class="pre">&#64;cython.freelist(N)</span></code> creates a static freelist of N
+instances for an extension type, thus avoiding the costly allocation step if
+possible. This can speed up object instantiation by 20-30% in suitable
+scenarios. Note that freelists are currently only supported for base types,
+not for types that inherit from others.</li>
+<li>Fast extension type instantiation using the <code class="docutils literal"><span class="pre">Type.__new__(Type)</span></code> idiom has
+gained support for passing arguments.  It is also a bit faster for types defined
+inside of the module.</li>
+<li>The Python2-only dict methods <code class="docutils literal"><span class="pre">.iter*()</span></code> and <code class="docutils literal"><span class="pre">.view*()</span></code> (requires Python 2.7)
+are automatically mapped to the equivalent keys/values/items methods in Python 3
+for typed dictionaries.</li>
+<li>Slicing unicode strings, lists and tuples is faster.</li>
+<li>list.append() is faster on average.</li>
+<li><code class="docutils literal"><span class="pre">raise</span> <span class="pre">Exception()</span> <span class="pre">from</span> <span class="pre">None</span></code> suppresses the exception context in Py3.3.</li>
+<li>Py3 compatible <code class="docutils literal"><span class="pre">exec(tuple)</span></code> syntax is supported in Py2 code.</li>
+<li>Keyword arguments are supported for cdef functions.</li>
+<li>External C++ classes can be declared nogil.  Patch by John Stumpo.  This fixes
+trac ticket 805.</li>
+</ul>
+</div>
+<div class="section" id="id86">
+<h3>Bugs fixed<a class="headerlink" href="#id86" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>2-value slicing of unknown objects passes the correct slice when the <code class="docutils literal"><span class="pre">getitem</span></code>
+protocol is used instead of the <code class="docutils literal"><span class="pre">getslice</span></code> protocol (especially in Python 3),
+i.e. <code class="docutils literal"><span class="pre">None</span></code> values for missing bounds instead of <code class="docutils literal"><span class="pre">[0,maxsize]</span></code>.  It is also
+a bit faster in some cases, e.g. for constant bounds.  This fixes trac ticket 636.</li>
+<li>Cascaded assignments of None values to extension type variables failed with
+a <code class="docutils literal"><span class="pre">TypeError</span></code> at runtime.</li>
+<li>The <code class="docutils literal"><span class="pre">__defaults__</span></code> attribute was not writable for Cython implemented
+functions.</li>
+<li>Default values of keyword-only arguments showed up in <code class="docutils literal"><span class="pre">__defaults__</span></code> instead
+of <code class="docutils literal"><span class="pre">__kwdefaults__</span></code> (which was not implemented).  Both are available for
+Cython implemented functions now, as specified in Python 3.x.</li>
+<li><code class="docutils literal"><span class="pre">yield</span></code> works inside of <code class="docutils literal"><span class="pre">with</span> <span class="pre">gil</span></code> sections.  It previously lead to a crash.
+This fixes trac ticket 803.</li>
+<li>Static methods without explicitly named positional arguments (e.g. having only
+<code class="docutils literal"><span class="pre">*args</span></code>) crashed when being called.  This fixes trac ticket 804.</li>
+<li><code class="docutils literal"><span class="pre">dir()</span></code> without arguments previously returned an unsorted list, which now
+gets sorted as expected.</li>
+<li><code class="docutils literal"><span class="pre">dict.items()</span></code>, <code class="docutils literal"><span class="pre">dict.keys()</span></code> and <code class="docutils literal"><span class="pre">dict.values()</span></code> no longer return lists
+in Python 3.</li>
+<li>Exiting from an <code class="docutils literal"><span class="pre">except-as</span></code> clause now deletes the exception in Python 3 mode.</li>
+<li>The declarations of <code class="docutils literal"><span class="pre">frexp()</span></code> and <code class="docutils literal"><span class="pre">ldexp()</span></code> in <code class="docutils literal"><span class="pre">math.pxd</span></code> were incorrect.</li>
+</ul>
+</div>
+<div class="section" id="id87">
+<h3>Other changes<a class="headerlink" href="#id87" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="id88">
+<h2>0.18 (2013-01-28)<a class="headerlink" href="#id88" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id89">
+<h3>Features added<a class="headerlink" href="#id89" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Named Unicode escapes (“N{…}”) are supported.</li>
+<li>Python functions/classes provide the special attribute “__qualname__”
+as defined by PEP 3155.</li>
+<li>Added a directive <code class="docutils literal"><span class="pre">overflowcheck</span></code> which raises an OverflowException when
+arithmetic with C ints overflow.  This has a modest performance penalty, but
+is much faster than using Python ints.</li>
+<li>Calls to nested Python functions are resolved at compile time.</li>
+<li>Type inference works across nested functions.</li>
+<li><code class="docutils literal"><span class="pre">py_bytes_string.decode(...)</span></code> is optimised.</li>
+<li>C <code class="docutils literal"><span class="pre">const</span></code> declarations are supported in the language.</li>
+</ul>
+</div>
+<div class="section" id="id90">
+<h3>Bugs fixed<a class="headerlink" href="#id90" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Automatic C++ exception mapping didn’t work in nogil functions (only in
+“with nogil” blocks).</li>
+</ul>
+</div>
+<div class="section" id="id91">
+<h3>Other changes<a class="headerlink" href="#id91" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="id92">
+<h2>0.17.4 (2013-01-03)<a class="headerlink" href="#id92" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id93">
+<h3>Bugs fixed<a class="headerlink" href="#id93" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Garbage collection triggered during deallocation of container classes could lead to a double-deallocation.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id94">
+<h2>0.17.3 (2012-12-14)<a class="headerlink" href="#id94" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id95">
+<h3>Features added<a class="headerlink" href="#id95" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id96">
+<h3>Bugs fixed<a class="headerlink" href="#id96" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>During final interpreter cleanup (with types cleanup enabled at compile time), extension types that inherit from base types over more than one level that were cimported from other modules could lead to a crash.</li>
+<li>Weak-reference support in extension types (with a <code class="docutils literal"><span class="pre">cdef</span> <span class="pre">__weakref__</span></code> attribute) generated incorrect deallocation code.</li>
+<li>In CPython 3.3, converting a Unicode character to the Py_UNICODE type could fail to raise an overflow for non-BMP characters that do not fit into a wchar_t on the current platform.</li>
+<li>Negative C integer constants lost their longness suffix in the generated C code.</li>
+</ul>
+</div>
+<div class="section" id="id97">
+<h3>Other changes<a class="headerlink" href="#id97" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="id98">
+<h2>0.17.2 (2012-11-20)<a class="headerlink" href="#id98" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id99">
+<h3>Features added<a class="headerlink" href="#id99" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">cythonize()</span></code> gained a best effort compile mode that can be used to simply ignore .py files that fail to compile.</li>
+</ul>
+</div>
+<div class="section" id="id100">
+<h3>Bugs fixed<a class="headerlink" href="#id100" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Replacing an object reference with the value of one of its cdef attributes could generate incorrect C code that accessed the object after deleting its last reference.</li>
+<li>C-to-Python type coercions during cascaded comparisons could generate invalid C code, specifically when using the ‘in’ operator.</li>
+<li>“obj[1,]” passed a single integer into the item getter instead of a tuple.</li>
+<li>Cyclic imports at module init time did not work in Py3.</li>
+<li>The names of C++ destructors for template classes were built incorrectly.</li>
+<li>In pure mode, type casts in Cython syntax and the C ampersand operator are now rejected. Use the pure mode replacements instead.</li>
+<li>In pure mode, C type names and the sizeof() function are no longer recognised as such and can be used as normal Python names.</li>
+<li>The extended C level support for the CPython array type was declared too late to be used by user defined classes.</li>
+<li>C++ class nesting was broken.</li>
+<li>Better checking for required nullary constructors for stack-allocated C++ instances.</li>
+<li>Remove module docstring in no-docstring mode.</li>
+<li>Fix specialization for varargs function signatures.</li>
+<li>Fix several compiler crashes.</li>
+</ul>
+</div>
+<div class="section" id="id101">
+<h3>Other changes<a class="headerlink" href="#id101" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>An experimental distutils script for compiling the CPython standard library was added as Tools/cystdlib.py.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id102">
+<h2>0.17.1 (2012-09-26)<a class="headerlink" href="#id102" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id103">
+<h3>Features added<a class="headerlink" href="#id103" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id104">
+<h3>Bugs fixed<a class="headerlink" href="#id104" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>A reference leak was fixed in the new dict iteration code when the loop target was not a plain variable but an unpacked tuple.</li>
+<li>Memory views did not handle the special case of a NULL buffer strides value, as allowed by PEP3118.</li>
+</ul>
+</div>
+<div class="section" id="id105">
+<h3>Other changes<a class="headerlink" href="#id105" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="id106">
+<h2>0.17 (2012-09-01)<a class="headerlink" href="#id106" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id107">
+<h3>Features added<a class="headerlink" href="#id107" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Alpha quality support for compiling and running Cython generated extension modules in PyPy (through cpyext). Note that this requires at least PyPy 1.9 and in many cases also adaptations in user code, especially to avoid borrowed references when no owned reference is being held directly in C space (a reference in a Python list or dict is not enough, for example). See the documentation on porting Cython code to PyPy.</li>
+<li>“yield from” is supported (PEP 380) and a couple of minor problems with generators were fixed.</li>
+<li>C++ STL container classes automatically coerce from and to the equivalent Python container types on typed assignments and casts. Note that the data in the containers is copied during this conversion.</li>
+<li>C++ iterators can now be iterated over using “for x in cpp_container” whenever cpp_container has begin() and end() methods returning objects satisfying the iterator pattern (that is, it can be incremented, dereferenced, and compared (for non-equality)).</li>
+<li>cdef classes can now have C++ class members (provided a zero-argument constructor exists)</li>
+<li>A new cpython.array standard cimport file allows to efficiently talk to the stdlib array.array data type in Python 2. Since CPython does not export an official C-API for this module, it receives special casing by the compiler in order to avoid setup overhead on user side. In Python 3, both buffers and memory views on the array type already worked out of the box with earlier versions of Cython due to the native support for the buffer interface in the Py3 array module.</li>
+<li>Fast dict iteration is now enabled optimistically also for untyped variables when the common iteration methods are used.</li>
+<li>The unicode string processing code was adapted for the upcoming CPython 3.3 (PEP 393, new Unicode buffer layout).</li>
+<li>Buffer arguments and memory view arguments in Python functions can be declared “not None” to raise a TypeError on None input.</li>
+<li>c(p)def functions in pure mode can specify their return type with “&#64;cython.returns()”.</li>
+<li>Automatic dispatch for fused functions with memoryview arguments</li>
+<li>Support newaxis indexing for memoryviews</li>
+<li>Support decorators for fused functions</li>
+</ul>
+</div>
+<div class="section" id="id108">
+<h3>Bugs fixed<a class="headerlink" href="#id108" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Old-style Py2 imports did not work reliably in Python 3.x and were broken in Python 3.3. Regardless of this fix, it’s generally best to be explicit about relative and global imports in Cython code because old-style imports have a higher overhead. To this end, “from __future__ import absolute_import” is supported in Python/Cython 2.x code now (previous versions of Cython already used it when compiling Python 3 code).</li>
+<li>Stricter constraints on the “inline” and “final” modifiers. If your code does not compile due to this change, chances are these modifiers were previously being ignored by the compiler and can be removed without any performance regression.</li>
+<li>Exceptions are always instantiated while raising them (as in Python), instead of risking to instantiate them in potentially unsafe situations when they need to be handled or otherwise processed.</li>
+<li>locals() properly ignores names that do not have Python compatible types (including automatically inferred types).</li>
+<li>Some garbage collection issues of memory views were fixed.</li>
+<li>numpy.pxd compiles in Python 3 mode.</li>
+<li>Several C compiler warnings were fixed.</li>
+<li>Several bugs related to memoryviews and fused types were fixed.</li>
+<li>Several bug-fixes and improvements related to cythonize(), including ccache-style caching.</li>
+</ul>
+</div>
+<div class="section" id="id109">
+<h3>Other changes<a class="headerlink" href="#id109" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>libc.string provides a convenience declaration for const uchar in addition to const char.</li>
+<li>User declared char* types are now recognised as such and auto-coerce to and from Python bytes strings.</li>
+<li>callable() and next() compile to more efficient C code.</li>
+<li>list.append() is faster on average.</li>
+<li>Modules generated by &#64;cython.inline() are written into the directory pointed to by the environment variable CYTHON_CACHE_DIR if set.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id110">
+<h2>0.16 (2012-04-21)<a class="headerlink" href="#id110" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id111">
+<h3>Features added<a class="headerlink" href="#id111" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Enhancements to Cython’s function type (support for weak references, default arguments, code objects, dynamic attributes, classmethods, staticmethods, and more)</li>
+<li>Fused Types - Template-like support for functions and methods CEP 522 (docs)</li>
+<li>Typed views on memory - Support for efficient direct and indirect buffers (indexing, slicing, transposing, …) CEP 517 (docs)</li>
+<li>super() without arguments</li>
+<li>Final cdef methods (which translate into direct calls on known instances)</li>
+</ul>
+</div>
+<div class="section" id="id112">
+<h3>Bugs fixed<a class="headerlink" href="#id112" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>fix alignment handling for record types in buffer support</li>
+</ul>
+</div>
+<div class="section" id="id113">
+<h3>Other changes<a class="headerlink" href="#id113" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>support default arguments for closures</li>
+<li>search sys.path for pxd files</li>
+<li>support C++ template casting</li>
+<li>faster traceback building and faster generator termination</li>
+<li>support inplace operators on indexed buffers</li>
+<li>allow nested prange sections</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id114">
+<h2>0.15.1 (2011-09-19)<a class="headerlink" href="#id114" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id115">
+<h3>Features added<a class="headerlink" href="#id115" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id116">
+<h3>Bugs fixed<a class="headerlink" href="#id116" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id117">
+<h3>Other changes<a class="headerlink" href="#id117" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="id118">
+<h2>0.15 (2011-08-05)<a class="headerlink" href="#id118" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id119">
+<h3>Features added<a class="headerlink" href="#id119" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Generators (yield) - Cython has full support for generators, generator expressions and PEP 342 coroutines.</li>
+<li>The nonlocal keyword is supported.</li>
+<li>Re-acquiring the gil: with gil - works as expected within a nogil context.</li>
+<li>OpenMP support: prange.</li>
+<li>Control flow analysis prunes dead code and emits warnings and errors about uninitialised variables.</li>
+<li>Debugger command cy set to assign values of expressions to Cython variables and cy exec counterpart $cy_eval().</li>
+<li>Exception chaining PEP 3134.</li>
+<li>Relative imports PEP 328.</li>
+<li>Improved pure syntax including cython.cclass, cython.cfunc, and cython.ccall.</li>
+<li>The with statement has its own dedicated and faster C implementation.</li>
+<li>Support for del.</li>
+<li>Boundschecking directives implemented for builtin Python sequence types.</li>
+<li>Several updates and additions to the shipped standard library .pxd files.</li>
+<li>Forward declaration of types is no longer required for circular references.</li>
+</ul>
+</div>
+<div class="section" id="id120">
+<h3>Bugs fixed<a class="headerlink" href="#id120" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id121">
+<h3>Other changes<a class="headerlink" href="#id121" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Uninitialized variables are no longer initialized to None and accessing them has the same semantics as standard Python.</li>
+<li>globals() now returns a read-only dict of the Cython module’s globals, rather than the globals of the first non-Cython module in the stack</li>
+<li>Many C++ exceptions are now special cased to give closer Python counterparts. This means that except+ functions that formerly raised generic RuntimeErrors may raise something else such as ArithmeticError.</li>
+<li>The inlined generator expressions (introduced in Cython 0.13) were disabled in favour of full generator expression support. This breaks code that previously used them inside of cdef functions (usage in def functions continues to work) and induces a performance regression for cases that continue to work but that were previously inlined. We hope to reinstate this feature in the near future.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id122">
+<h2>0.14.1 (2011-02-04)<a class="headerlink" href="#id122" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id123">
+<h3>Features added<a class="headerlink" href="#id123" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>The gdb debugging support was extended to include all major Cython features, including closures.</li>
+<li>raise MemoryError() is now safe to use as Cython replaces it with the correct C-API call.</li>
+</ul>
+</div>
+<div class="section" id="id124">
+<h3>Bugs fixed<a class="headerlink" href="#id124" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id125">
+<h3>Other changes<a class="headerlink" href="#id125" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Decorators on special methods of cdef classes now raise a compile time error rather than being ignored.</li>
+<li>In Python 3 language level mode (-3 option), the ‘str’ type is now mapped to ‘unicode’, so that cdef str s declares a Unicode string even when running in Python 2.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id126">
+<h2>0.14 (2010-12-14)<a class="headerlink" href="#id126" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id127">
+<h3>Features added<a class="headerlink" href="#id127" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Python classes can now be nested and receive a proper closure at definition time.</li>
+<li>Redefinition is supported for Python functions, even within the same scope.</li>
+<li>Lambda expressions are supported in class bodies and at the module level.</li>
+<li>Metaclasses are supported for Python classes, both in Python 2 and Python 3 syntax. The Python 3 syntax (using a keyword argument in the type declaration) is preferred and optimised at compile time.</li>
+<li>“final” extension classes prevent inheritance in Python space. This feature is available through the new “cython.final” decorator. In the future, these classes may receive further optimisations.</li>
+<li>“internal” extension classes do not show up in the module dictionary. This feature is available through the new “cython.internal” decorator.</li>
+<li>Extension type inheritance from builtin types, such as “cdef class MyUnicode(unicode)”, now works without further external type redeclarations (which are also strongly discouraged now and continue to issue a warning).</li>
+<li>GDB support. <a class="reference external" href="http://docs.cython.org/src/userguide/debugging.html">http://docs.cython.org/src/userguide/debugging.html</a></li>
+<li>A new build system with support for inline distutils directives, correct dependency tracking, and parallel compilation. <a class="reference external" href="http://wiki.cython.org/enhancements/distutils_preprocessing">http://wiki.cython.org/enhancements/distutils_preprocessing</a></li>
+<li>Support for dynamic compilation at runtime via the new cython.inline function and cython.compile decorator. <a class="reference external" href="http://wiki.cython.org/enhancements/inline">http://wiki.cython.org/enhancements/inline</a></li>
+<li>“nogil” blocks are supported when compiling pure Python code by writing “with cython.nogil”.</li>
+<li>Iterating over arbitrary pointer types is now supported, as is an optimized version of the in operator, e.g. x in ptr[a:b].</li>
+</ul>
+</div>
+<div class="section" id="id128">
+<h3>Bugs fixed<a class="headerlink" href="#id128" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>In parallel assignments, the right side was evaluated in reverse order in 0.13. This could result in errors if it had side effects (e.g. function calls).</li>
+<li>In some cases, methods of builtin types would raise a SystemError instead of an AttributeError when called on None.</li>
+</ul>
+</div>
+<div class="section" id="id129">
+<h3>Other changes<a class="headerlink" href="#id129" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Constant tuples are now cached over the lifetime of an extension module, just like CPython does. Constant argument tuples of Python function calls are also cached.</li>
+<li>Closures have tightened to include exactly the names used in the inner functions and classes. Previously, they held the complete locals of the defining function.</li>
+<li>The builtin “next()” function in Python 2.6 and later is now implemented internally and therefore available in all Python versions. This makes it the preferred and portable way of manually advancing an iterator.</li>
+<li>In addition to the previously supported inlined generator expressions in 0.13, “sorted(genexpr)” can now be used as well. Typing issues were fixed in “sum(genexpr)” that could lead to invalid C code being generated. Other known issues with inlined generator expressions were also fixed that make upgrading to 0.14 a strong recommendation for code that uses them. Note that general generators and generator expressions continue to be not supported.</li>
+<li>Inplace arithmetic operators now respect the cdivision directive and are supported for complex types.</li>
+<li>Typing a variable as type “complex” previously gave it the Python object type. It now uses the appropriate C/C++ double complex type. A side-effect is that assignments and typed function parameters now accept anything that Python can coerce to a complex, including integers and floats, and not only complex instances.</li>
+<li>Large integer literals pass through the compiler in a safer way. To prevent truncation in C code, non 32-bit literals are turned into Python objects if not used in a C context. This context can either be given by a clear C literal suffix such as “UL” or “LL” (or “L” in Python 3 code), or it can be an assignment to a typed variable or a typed function argument, in which case it is up to the user to take care of a sufficiently large value space of the target.</li>
+<li>Python functions are declared in the order they appear in the file, rather than all being created at module creation time. This is consistent with Python and needed to support, for example, conditional or repeated declarations of functions. In the face of circular imports this may cause code to break, so a new –disable-function-redefinition flag was added to revert to the old behavior. This flag will be removed in a future release, so should only be used as a stopgap until old code can be fixed.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id130">
+<h2>0.13 (2010-08-25)<a class="headerlink" href="#id130" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id131">
+<h3>Features added<a class="headerlink" href="#id131" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Closures are fully supported for Python functions. Cython supports inner functions and lambda expressions. Generators and generator expressions are not supported in this release.</li>
+<li>Proper C++ support. Cython knows about C++ classes, templates and overloaded function signatures, so that Cython code can interact with them in a straight forward way.</li>
+<li>Type inference is enabled by default for safe C types (e.g. double, bint, C++ classes) and known extension types. This reduces the need for explicit type declarations and can improve the performance of untyped code in some cases. There is also a verbose compile mode for testing the impact on user code.</li>
+<li>Cython’s for-in-loop can iterate over C arrays and sliced pointers. The type of the loop variable will be inferred automatically in this case.</li>
+<li>The Py_UNICODE integer type for Unicode code points is fully supported, including for-loops and ‘in’ tests on unicode strings. It coerces from and to single character unicode strings. Note that untyped for-loop variables will automatically be inferred as Py_UNICODE when iterating over a unicode string. In most cases, this will be much more efficient than yielding sliced string objects, but can also have a negative performance impact when the variable is used in a Python context multiple times, so that it needs to coerce to a unicode string object more than once. If this happens, typing the loop variable as unicode or object will help.</li>
+<li>The built-in functions any(), all(), sum(), list(), set() and dict() are inlined as plain for loops when called on generator expressions. Note that generator expressions are not generally supported apart from this feature. Also, tuple(genexpr) is not currently supported - use tuple([listcomp]) instead.</li>
+<li>More shipped standard library declarations. The python_* and stdlib/stdio .pxd files have been deprecated in favor of clib.* and cpython[.*] and may get removed in a future release.</li>
+<li>Pure Python mode no longer disallows non-Python keywords like ‘cdef’, ‘include’ or ‘cimport’. It also no longer recognises syntax extensions like the for-from loop.</li>
+<li>Parsing has improved for Python 3 syntax in Python code, although not all features are correctly supported. The missing Python 3 features are being worked on for the next release.</li>
+<li>from __future__ import print_function is supported in Python 2.6 and later. Note that there is currently no emulation for earlier Python versions, so code that uses print() with this future import will require at least Python 2.6.</li>
+<li>New compiler directive language_level (valid values: 2 or 3) with corresponding command line options -2 and -3 requests source code compatibility with Python 2.x or Python 3.x respectively. Language level 3 currently enforces unicode literals for unprefixed string literals, enables the print function (requires Python 2.6 or later) and keeps loop variables in list comprehensions from leaking.</li>
+<li>Loop variables in set/dict comprehensions no longer leak into the surrounding scope (following Python 2.7). List comprehensions are unchanged in language level 2.</li>
+<li>print &gt;&gt; stream</li>
+</ul>
+</div>
+<div class="section" id="id132">
+<h3>Bugs fixed<a class="headerlink" href="#id132" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id133">
+<h3>Other changes<a class="headerlink" href="#id133" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">The availability of type inference by default means that Cython will also infer the type of pointers on assignments. Previously, code like this:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="kt">char</span>* <span class="nf">s</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">untyped_variable</span> <span class="o">=</span> <span class="n">s</span>
+</pre></div>
+</div>
+<p>would convert the char* to a Python bytes string and assign that. This is no longer the case and no coercion will happen in the example above. The correct way of doing this is through an explicit cast or by typing the target variable, i.e.</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="kt">char</span>* <span class="nf">s</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">untyped_variable1</span> <span class="o">=</span> <span class="p">&lt;</span><span class="kt">bytes</span><span class="p">&gt;</span><span class="n">s</span>
+<span class="n">untyped_variable2</span> <span class="o">=</span> <span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;</span><span class="n">s</span>
+
+<span class="k">cdef</span> <span class="kt">object</span> <span class="nf">py_object</span> <span class="o">=</span> <span class="n">s</span>
+<span class="k">cdef</span> <span class="kt">bytes</span>  <span class="nf">bytes_string</span> <span class="o">=</span> <span class="n">s</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">bool is no longer a valid type name by default. The problem is that it’s not clear whether bool should refer to the Python type or the C++ type, and expecting one and finding the other has already led to several hard-to-find bugs. Both types are available for importing: you can use from cpython cimport bool for the Python bool type, and from libcpp cimport bool for the C++ type. bool is still a valid object by default, so one can still write bool(x).</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">__getsegcount__</span></code> is now correctly typed to take a <code class="docutils literal"><span class="pre">Py_size_t*</span></code> rather than an <code class="docutils literal"><span class="pre">int*</span></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id134">
+<h2>0.12.1 (2010-02-02)<a class="headerlink" href="#id134" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id135">
+<h3>Features added<a class="headerlink" href="#id135" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Type inference improvements.<ul>
+<li>There have been several bug fixes and improvements to the type inferencer.</li>
+<li>Notably, there is now a “safe” mode enabled by setting the infer_types directive to None. (The None here refers to the “default” mode, which will be the default in 0.13.) This safe mode limits inference to Python object types and C doubles, which should speed up execution without affecting any semantics such as integer overflow behavior like infer_types=True might. There is also an infer_types.verbose option which allows one to see what types are inferred.</li>
+</ul>
+</li>
+<li>The boundscheck directive works for lists and tuples as well as buffers.</li>
+<li>len(s) and s.decode(“encoding”) are efficiently supported for char* s.</li>
+<li>Cython’s INLINE macro has been renamed to CYTHON_INLINE to reduce conflict and has better support for the MSVC compiler on Windows. It is no longer clobbered if externally defined.</li>
+<li>Revision history is now omitted from the source package, resulting in a 85% size reduction. Running make repo will download the history and turn the directory into a complete Mercurial working repository.</li>
+<li>Cython modules don’t need to be recompiled when the size of an external type grows. (A warning, rather than an error, is produced.) This should be helpful for binary distributions relying on NumPy.</li>
+</ul>
+</div>
+<div class="section" id="id136">
+<h3>Bugs fixed<a class="headerlink" href="#id136" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Several other bugs and minor improvements have been made. This release should be fully backwards compatible with 0.12.</li>
+</ul>
+</div>
+<div class="section" id="id137">
+<h3>Other changes<a class="headerlink" href="#id137" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="id138">
+<h2>0.12 (2009-11-23)<a class="headerlink" href="#id138" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id139">
+<h3>Features added<a class="headerlink" href="#id139" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Type inference with the infer_types directive</li>
+<li>Seamless C++ complex support</li>
+<li>Fast extension type instantiation using the normal Python meme obj = MyType.__new__(MyType)</li>
+<li>Improved support for Py3.1</li>
+<li>Cython now runs under Python 3.x using the 2to3 tool</li>
+<li>unittest support for doctests in Cython modules</li>
+<li>Optimised handling of C strings (char*): for c in cstring[2:50] and cstring.decode()</li>
+<li>Looping over c pointers: for i in intptr[:50].</li>
+<li>pyximport improvements</li>
+<li>cython_freeze improvements</li>
+</ul>
+</div>
+<div class="section" id="id140">
+<h3>Bugs fixed<a class="headerlink" href="#id140" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Many bug fixes</li>
+</ul>
+</div>
+<div class="section" id="id141">
+<h3>Other changes<a class="headerlink" href="#id141" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Many other optimisation, e.g. enumerate() loops, parallel swap assignments (a,b = b,a), and unicode.encode()</li>
+<li>More complete numpy.pxd</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id142">
+<h2>0.11.2 (2009-05-20)<a class="headerlink" href="#id142" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id143">
+<h3>Features added<a class="headerlink" href="#id143" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">There’s now native complex floating point support! C99 complex will be used if complex.h is included, otherwise explicit complex arithmetic working on all C compilers is used. [Robert Bradshaw]</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="kt">double</span> <span class="kt">complex</span> <span class="nf">a</span> <span class="o">=</span> <span class="mf">1</span> <span class="o">+</span> <span class="mf">0.3</span><span class="n">j</span>
+<span class="k">cdef</span> <span class="kt">np</span>.<span class="kt">ndarray</span>[<span class="kt">np</span>.<span class="nf">complex128_t</span><span class="p">,</span> <span class="nf">ndim</span><span class="o">=</span><span class="mf">2</span><span class="p">]</span> <span class="n">arr</span> <span class="o">=</span> \
+   <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mf">10</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">complex128</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Cython can now generate a main()-method for embedding of the Python interpreter into an executable (see #289) [Robert Bradshaw]</p>
+</li>
+<li><p class="first">&#64;wraparound directive (another way to disable arr[idx] for negative idx) [Dag Sverre Seljebotn]</p>
+</li>
+<li><p class="first">Correct support for NumPy record dtypes with different alignments, and “cdef packed struct” support [Dag Sverre Seljebotn]</p>
+</li>
+<li><p class="first">&#64;callspec directive, allowing custom calling convention macros [Lisandro Dalcin]</p>
+</li>
+</ul>
+</div>
+<div class="section" id="id144">
+<h3>Bugs fixed<a class="headerlink" href="#id144" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id145">
+<h3>Other changes<a class="headerlink" href="#id145" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Bug fixes and smaller improvements. For the full list, see [1].</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index_ko.html">
+              <img class="logo" src="../_static/cythonlogo.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="../index_ko.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Cython Changelog</a><ul>
+<li><a class="reference internal" href="#id1">0.28 (2017-??-??)</a><ul>
+<li><a class="reference internal" href="#features-added">Features added</a></li>
+<li><a class="reference internal" href="#bugs-fixed">Bugs fixed</a></li>
+<li><a class="reference internal" href="#other-changes">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id2">0.27.3 (2017-11-03)</a><ul>
+<li><a class="reference internal" href="#id3">Bugs fixed</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id4">0.27.2 (2017-10-22)</a><ul>
+<li><a class="reference internal" href="#id5">Bugs fixed</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id6">0.27.1 (2017-10-01)</a><ul>
+<li><a class="reference internal" href="#id7">Features added</a></li>
+<li><a class="reference internal" href="#id8">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id9">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id10">0.27 (2017-09-23)</a><ul>
+<li><a class="reference internal" href="#id11">Features added</a></li>
+<li><a class="reference internal" href="#id12">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id13">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id14">0.26.1 (2017-08-29)</a><ul>
+<li><a class="reference internal" href="#id15">Features added</a></li>
+<li><a class="reference internal" href="#id16">Bugs fixed</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id17">0.26 (2017-07-19)</a><ul>
+<li><a class="reference internal" href="#id18">Features added</a></li>
+<li><a class="reference internal" href="#id19">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id20">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id21">0.25.2 (2016-12-08)</a><ul>
+<li><a class="reference internal" href="#id22">Bugs fixed</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id23">0.25.1 (2016-10-26)</a><ul>
+<li><a class="reference internal" href="#id24">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id25">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id26">0.25 (2016-10-25)</a><ul>
+<li><a class="reference internal" href="#id27">Features added</a></li>
+<li><a class="reference internal" href="#significant-bugs-fixed">Significant Bugs fixed</a></li>
+<li><a class="reference internal" href="#id28">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id29">0.24.1 (2016-07-15)</a><ul>
+<li><a class="reference internal" href="#id30">Bugs fixed</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id31">0.24 (2016-04-04)</a><ul>
+<li><a class="reference internal" href="#id32">Features added</a></li>
+<li><a class="reference internal" href="#id33">Bugs fixed</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id34">0.23.5 (2016-03-26)</a></li>
+<li><a class="reference internal" href="#id37">0.23.4 (2015-10-10)</a><ul>
+<li><a class="reference internal" href="#id38">Bugs fixed</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id39">0.23.3 (2015-09-29)</a><ul>
+<li><a class="reference internal" href="#id40">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id41">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id42">0.23.2 (2015-09-11)</a><ul>
+<li><a class="reference internal" href="#id43">Bugs fixed</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id44">0.23.1 (2015-08-22)</a><ul>
+<li><a class="reference internal" href="#id45">Bugs fixed</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id46">0.23 (2015-08-08)</a><ul>
+<li><a class="reference internal" href="#id47">Features added</a></li>
+<li><a class="reference internal" href="#id49">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id50">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id51">0.22.1 (2015-06-20)</a><ul>
+<li><a class="reference internal" href="#id52">Bugs fixed</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id53">0.22 (2015-02-11)</a><ul>
+<li><a class="reference internal" href="#id54">Features added</a></li>
+<li><a class="reference internal" href="#id55">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id56">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id57">0.21.2 (2014-12-27)</a><ul>
+<li><a class="reference internal" href="#id58">Bugs fixed</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id59">0.21.1 (2014-10-18)</a><ul>
+<li><a class="reference internal" href="#id60">Features added</a></li>
+<li><a class="reference internal" href="#id61">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id62">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id63">0.21 (2014-09-10)</a><ul>
+<li><a class="reference internal" href="#id64">Features added</a></li>
+<li><a class="reference internal" href="#optimizations">Optimizations</a></li>
+<li><a class="reference internal" href="#id65">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id66">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id67">0.20.2 (2014-06-16)</a><ul>
+<li><a class="reference internal" href="#id68">Features added</a></li>
+<li><a class="reference internal" href="#id69">Bugs fixed</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id70">0.20.1 (2014-02-11)</a><ul>
+<li><a class="reference internal" href="#id71">Bugs fixed</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id72">0.20 (2014-01-18)</a><ul>
+<li><a class="reference internal" href="#id73">Features added</a></li>
+<li><a class="reference internal" href="#id74">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id75">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id76">0.19.2 (2013-10-13)</a><ul>
+<li><a class="reference internal" href="#id77">Features added</a></li>
+<li><a class="reference internal" href="#id78">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id79">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id80">0.19.1 (2013-05-11)</a><ul>
+<li><a class="reference internal" href="#id81">Features added</a></li>
+<li><a class="reference internal" href="#id82">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id83">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id84">0.19 (2013-04-19)</a><ul>
+<li><a class="reference internal" href="#id85">Features added</a></li>
+<li><a class="reference internal" href="#id86">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id87">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id88">0.18 (2013-01-28)</a><ul>
+<li><a class="reference internal" href="#id89">Features added</a></li>
+<li><a class="reference internal" href="#id90">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id91">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id92">0.17.4 (2013-01-03)</a><ul>
+<li><a class="reference internal" href="#id93">Bugs fixed</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id94">0.17.3 (2012-12-14)</a><ul>
+<li><a class="reference internal" href="#id95">Features added</a></li>
+<li><a class="reference internal" href="#id96">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id97">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id98">0.17.2 (2012-11-20)</a><ul>
+<li><a class="reference internal" href="#id99">Features added</a></li>
+<li><a class="reference internal" href="#id100">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id101">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id102">0.17.1 (2012-09-26)</a><ul>
+<li><a class="reference internal" href="#id103">Features added</a></li>
+<li><a class="reference internal" href="#id104">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id105">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id106">0.17 (2012-09-01)</a><ul>
+<li><a class="reference internal" href="#id107">Features added</a></li>
+<li><a class="reference internal" href="#id108">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id109">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id110">0.16 (2012-04-21)</a><ul>
+<li><a class="reference internal" href="#id111">Features added</a></li>
+<li><a class="reference internal" href="#id112">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id113">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id114">0.15.1 (2011-09-19)</a><ul>
+<li><a class="reference internal" href="#id115">Features added</a></li>
+<li><a class="reference internal" href="#id116">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id117">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id118">0.15 (2011-08-05)</a><ul>
+<li><a class="reference internal" href="#id119">Features added</a></li>
+<li><a class="reference internal" href="#id120">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id121">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id122">0.14.1 (2011-02-04)</a><ul>
+<li><a class="reference internal" href="#id123">Features added</a></li>
+<li><a class="reference internal" href="#id124">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id125">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id126">0.14 (2010-12-14)</a><ul>
+<li><a class="reference internal" href="#id127">Features added</a></li>
+<li><a class="reference internal" href="#id128">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id129">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id130">0.13 (2010-08-25)</a><ul>
+<li><a class="reference internal" href="#id131">Features added</a></li>
+<li><a class="reference internal" href="#id132">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id133">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id134">0.12.1 (2010-02-02)</a><ul>
+<li><a class="reference internal" href="#id135">Features added</a></li>
+<li><a class="reference internal" href="#id136">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id137">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id138">0.12 (2009-11-23)</a><ul>
+<li><a class="reference internal" href="#id139">Features added</a></li>
+<li><a class="reference internal" href="#id140">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id141">Other changes</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id142">0.11.2 (2009-05-20)</a><ul>
+<li><a class="reference internal" href="#id143">Features added</a></li>
+<li><a class="reference internal" href="#id144">Bugs fixed</a></li>
+<li><a class="reference internal" href="#id145">Other changes</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="reference/special_methods_table.html"
+                        title="previous chapter">Special Methods Table</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/src/changes.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="reference/special_methods_table.html" title="Special Methods Table"
+             >previous</a></li>
+        <li class="nav-item nav-item-0"><a href="../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Stefan Behnel, Robert Bradshaw, Dag Sverre Seljebotn, Greg Ewing, William Stein, Gabriel Gellner, et al..
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6139100-3");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </body>
+</html>

@@ -1,0 +1,170 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Installing Cython &#8212; 싸이선(Cython) 0.28a0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.28a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="installing-cython">
+<h1>Installing Cython<a class="headerlink" href="#installing-cython" title="Permalink to this headline">¶</a></h1>
+<p>Many scientific Python distributions, such as Anaconda <a class="reference internal" href="install_ko.html#anaconda" id="id1">[Anaconda]</a>,
+Enthought Canopy <a class="reference internal" href="install_ko.html#canopy" id="id2">[Canopy]</a>, Python(x,y) <a class="reference internal" href="install_ko.html#pythonxy" id="id3">[Pythonxy]</a>, and Sage <a class="reference internal" href="install_ko.html#sage" id="id4">[Sage]</a>,
+bundle Cython and no setup is needed.  Note however that if your
+distribution ships a version of Cython which is too old you can still
+use the instructions below to update Cython.  Everything in this
+tutorial should work with Cython 0.11.2 and newer, unless a footnote
+says otherwise.</p>
+<p>Unlike most Python software, Cython requires a C compiler to be
+present on the system. The details of getting a C compiler varies
+according to the system used:</p>
+<blockquote>
+<div><ul class="simple">
+<li><strong>Linux</strong> The GNU C Compiler (gcc) is usually present, or easily
+available through the package system. On Ubuntu or Debian, for
+instance, the command <code class="docutils literal"><span class="pre">sudo</span> <span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">build-essential</span></code> will
+fetch everything you need.</li>
+<li><strong>Mac OS X</strong> To retrieve gcc, one option is to install Apple’s
+XCode, which can be retrieved from the Mac OS X’s install DVDs or
+from <a class="reference external" href="http://developer.apple.com">http://developer.apple.com</a>.</li>
+<li><strong>Windows</strong> A popular option is to use the open source MinGW (a
+Windows distribution of gcc). See the appendix for instructions for
+setting up MinGW manually. Enthought Canopy and Python(x,y) bundle
+MinGW, but some of the configuration steps in the appendix might
+still be necessary.  Another option is to use Microsoft’s Visual C.
+One must then use the same version which the installed Python was
+compiled with.</li>
+</ul>
+</div></blockquote>
+<p>The newest Cython release can always be downloaded from
+<a class="reference external" href="http://cython.org">http://cython.org</a>.  Unpack the tarball or zip file, enter the
+directory, and then run:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
+</pre></div>
+</div>
+<p>If you have <code class="docutils literal"><span class="pre">pip</span></code> set up on your system (e.g. in a virtualenv or a
+recent Python version), you should be able to fetch Cython from PyPI
+and install it using</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">Cython</span>
+</pre></div>
+</div>
+<p>For one-time builds, e.g. for CI/testing, on platforms that are not covered
+by one of the wheel packages provided on PyPI, it is substantially faster
+than a full source build to install an uncompiled (slower) version of Cython
+with</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">Cython</span> <span class="o">--</span><span class="n">install</span><span class="o">-</span><span class="n">option</span><span class="o">=</span><span class="s">&quot;--no-cython-compile&quot;</span>
+</pre></div>
+</div>
+<table class="docutils citation" frame="void" id="anaconda" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[Anaconda]</a></td><td><a class="reference external" href="http://docs.continuum.io/anaconda/">http://docs.continuum.io/anaconda/</a></td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="canopy" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[Canopy]</a></td><td><a class="reference external" href="https://enthought.com/products/canopy/">https://enthought.com/products/canopy/</a></td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="pythonxy" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[Pythonxy]</a></td><td><a class="reference external" href="http://www.pythonxy.com/">http://www.pythonxy.com/</a></td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="sage" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id4">[Sage]</a></td><td><ol class="first last upperalpha simple" start="23">
+<li>Stein et al., Sage Mathematics Software, <a class="reference external" href="http://sagemath.org">http://sagemath.org</a></li>
+</ol>
+</td></tr>
+</tbody>
+</table>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index_ko.html">
+              <img class="logo" src="../../_static/cythonlogo.png" alt="Logo"/>
+            </a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/src/quickstart/install.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Stefan Behnel, Robert Bradshaw, Dag Sverre Seljebotn, Greg Ewing, William Stein, Gabriel Gellner, et al..
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6139100-3");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </body>
+</html>

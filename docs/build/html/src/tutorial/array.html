@@ -1,0 +1,270 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Working with Python arrays &#8212; 싸이선(Cython) 0.28a0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.28a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="working-with-python-arrays">
+<span id="array-array"></span><h1>Working with Python arrays<a class="headerlink" href="#working-with-python-arrays" title="Permalink to this headline">¶</a></h1>
+<p>Python has a builtin array module supporting dynamic 1-dimensional arrays of
+primitive types. It is possible to access the underlying C array of a Python
+array from within Cython. At the same time they are ordinary Python objects
+which can be stored in lists and serialized between processes when using
+<a class="reference external" href="https://docs.python.org/3/library/multiprocessing.html#module-multiprocessing" title="(in Python v3.6)"><code class="xref py py-obj docutils literal"><span class="pre">multiprocessing</span></code></a>.</p>
+<p>Compared to the manual approach with <code class="xref c c-func docutils literal"><span class="pre">malloc()</span></code> and <code class="xref c c-func docutils literal"><span class="pre">free()</span></code>, this
+gives the safe and automatic memory management of Python, and compared to a
+Numpy array there is no need to install a dependency, as the <a class="reference external" href="https://docs.python.org/3/library/array.html#module-array" title="(in Python v3.6)"><code class="xref py py-obj docutils literal"><span class="pre">array</span></code></a>
+module is built into both Python and Cython.</p>
+<div class="section" id="safe-usage-with-memory-views">
+<h2>Safe usage with memory views<a class="headerlink" href="#safe-usage-with-memory-views" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">from</span> <span class="nn">cpython</span> <span class="k">cimport</span> <span class="n">array</span>
+<span class="k">import</span> <span class="nn">array</span>
+<span class="k">cdef</span> <span class="kt">array</span>.<span class="kt">array</span> <span class="nf">a</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="s">&#39;i&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mf">1</span><span class="p">,</span> <span class="mf">2</span><span class="p">,</span> <span class="mf">3</span><span class="p">])</span>
+<span class="k">cdef</span> <span class="kt">int</span>[<span class="p">:]</span> <span class="n">ca</span> <span class="o">=</span> <span class="n">a</span>
+
+<span class="k">print</span> <span class="n">ca</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>NB: the import brings the regular Python array object into the namespace
+while the cimport adds functions accessible from Cython.</p>
+<p>A Python array is constructed with a type signature and sequence of
+initial values. For the possible type signatures, refer to the Python
+documentation for the <a class="reference external" href="http://docs.python.org/library/array.html">array module</a>.</p>
+<p>Notice that when a Python array is assigned to a variable typed as
+memory view, there will be a slight overhead to construct the memory
+view. However, from that point on the variable can be passed to other
+functions without overhead, so long as it is typed:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">from</span> <span class="nn">cpython</span> <span class="k">cimport</span> <span class="n">array</span>
+<span class="k">import</span> <span class="nn">array</span>
+<span class="k">cdef</span> <span class="kt">array</span>.<span class="kt">array</span> <span class="nf">a</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="s">&#39;i&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mf">1</span><span class="p">,</span> <span class="mf">2</span><span class="p">,</span> <span class="mf">3</span><span class="p">])</span>
+<span class="k">cdef</span> <span class="kt">int</span>[<span class="p">:]</span> <span class="n">ca</span> <span class="o">=</span> <span class="n">a</span>
+
+<span class="k">cdef</span> <span class="kt">int</span> <span class="nf">overhead</span><span class="p">(</span><span class="nb">object</span> <span class="n">a</span><span class="p">):</span>
+    <span class="k">cdef</span> <span class="kt">int</span>[<span class="p">:]</span> <span class="n">ca</span> <span class="o">=</span> <span class="n">a</span>
+    <span class="k">return</span> <span class="n">ca</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span>
+
+<span class="k">cdef</span> <span class="kt">int</span> <span class="nf">no_overhead</span><span class="p">(</span><span class="nb">int</span><span class="p">[:]</span> <span class="n">ca</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ca</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span>
+
+<span class="k">print</span> <span class="n">overhead</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>  <span class="c"># new memory view will be constructed, overhead</span>
+<span class="k">print</span> <span class="n">no_overhead</span><span class="p">(</span><span class="n">ca</span><span class="p">)</span>  <span class="c"># ca is already a memory view, so no overhead</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="zero-overhead-unsafe-access-to-raw-c-pointer">
+<h2>Zero-overhead, unsafe access to raw C pointer<a class="headerlink" href="#zero-overhead-unsafe-access-to-raw-c-pointer" title="Permalink to this headline">¶</a></h2>
+<p>To avoid any overhead and to be able to pass a C pointer to other
+functions, it is possible to access the underlying contiguous array as a
+pointer. There is no type or bounds checking, so be careful to use the
+right type and signedness.</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">from</span> <span class="nn">cpython</span> <span class="k">cimport</span> <span class="n">array</span>
+<span class="k">import</span> <span class="nn">array</span>
+
+<span class="k">cdef</span> <span class="kt">array</span>.<span class="kt">array</span> <span class="nf">a</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="s">&#39;i&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mf">1</span><span class="p">,</span> <span class="mf">2</span><span class="p">,</span> <span class="mf">3</span><span class="p">])</span>
+
+<span class="c"># access underlying pointer:</span>
+<span class="k">print</span> <span class="n">a</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">as_ints</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span>
+
+<span class="k">from</span> <span class="nn">libc.string</span> <span class="k">cimport</span> <span class="n">memset</span>
+<span class="n">memset</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">as_voidptr</span><span class="p">,</span> <span class="mf">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">*</span> <span class="n">sizeof</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Note that any length-changing operation on the array object may invalidate the
+pointer.</p>
+</div>
+<div class="section" id="cloning-extending-arrays">
+<h2>Cloning, extending arrays<a class="headerlink" href="#cloning-extending-arrays" title="Permalink to this headline">¶</a></h2>
+<p>To avoid having to use the array constructor from the Python module,
+it is possible to create a new array with the same type as a template,
+and preallocate a given number of elements. The array is initialized to
+zero when requested.</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">from</span> <span class="nn">cpython</span> <span class="k">cimport</span> <span class="n">array</span>
+<span class="k">import</span> <span class="nn">array</span>
+
+<span class="k">cdef</span> <span class="kt">array</span>.<span class="kt">array</span> <span class="nf">int_array_template</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="s">&#39;i&#39;</span><span class="p">,</span> <span class="p">[])</span>
+<span class="k">cdef</span> <span class="kt">array</span>.<span class="kt">array</span> <span class="nf">newarray</span>
+
+<span class="c"># create an array with 3 elements with same type as template</span>
+<span class="n">newarray</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">int_array_template</span><span class="p">,</span> <span class="mf">3</span><span class="p">,</span> <span class="n">zero</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>An array can also be extended and resized; this avoids repeated memory
+reallocation which would occur if elements would be appended or removed
+one by one.</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">from</span> <span class="nn">cpython</span> <span class="k">cimport</span> <span class="n">array</span>
+<span class="k">import</span> <span class="nn">array</span>
+
+<span class="k">cdef</span> <span class="kt">array</span>.<span class="kt">array</span> <span class="nf">a</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="s">&#39;i&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mf">1</span><span class="p">,</span> <span class="mf">2</span><span class="p">,</span> <span class="mf">3</span><span class="p">])</span>
+<span class="k">cdef</span> <span class="kt">array</span>.<span class="kt">array</span> <span class="nf">b</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="s">&#39;i&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mf">4</span><span class="p">,</span> <span class="mf">5</span><span class="p">,</span> <span class="mf">6</span><span class="p">])</span>
+
+<span class="c"># extend a with b, resize as needed</span>
+<span class="n">array</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+<span class="c"># resize a, leaving just original three elements</span>
+<span class="n">array</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">b</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="api-reference">
+<h2>API reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="data-fields">
+<h3>Data fields<a class="headerlink" href="#data-fields" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="n">data</span><span class="o">.</span><span class="n">as_voidptr</span>
+<span class="n">data</span><span class="o">.</span><span class="n">as_chars</span>
+<span class="n">data</span><span class="o">.</span><span class="n">as_schars</span>
+<span class="n">data</span><span class="o">.</span><span class="n">as_uchars</span>
+<span class="n">data</span><span class="o">.</span><span class="n">as_shorts</span>
+<span class="n">data</span><span class="o">.</span><span class="n">as_ushorts</span>
+<span class="n">data</span><span class="o">.</span><span class="n">as_ints</span>
+<span class="n">data</span><span class="o">.</span><span class="n">as_uints</span>
+<span class="n">data</span><span class="o">.</span><span class="n">as_longs</span>
+<span class="n">data</span><span class="o">.</span><span class="n">as_ulongs</span>
+<span class="n">data</span><span class="o">.</span><span class="n">as_longlongs</span>  <span class="c"># requires Python &gt;=3</span>
+<span class="n">data</span><span class="o">.</span><span class="n">as_ulonglongs</span>  <span class="c"># requires Python &gt;=3</span>
+<span class="n">data</span><span class="o">.</span><span class="n">as_floats</span>
+<span class="n">data</span><span class="o">.</span><span class="n">as_doubles</span>
+<span class="n">data</span><span class="o">.</span><span class="n">as_pyunicodes</span>
+</pre></div>
+</div>
+<p>Direct access to the underlying contiguous C array, with given type;
+e.g., <code class="docutils literal"><span class="pre">myarray.data.as_ints</span></code>.</p>
+</div>
+<div class="section" id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h3>
+<p>The following functions are available to Cython from the array module:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">resize</span><span class="p">(</span><span class="n">array</span> <span class="bp">self</span><span class="p">,</span> <span class="n">Py_ssize_t</span> <span class="n">n</span><span class="p">)</span> <span class="k">except</span> <span class="o">-</span><span class="mf">1</span>
+</pre></div>
+</div>
+<p>Fast resize / realloc. Not suitable for repeated, small increments; resizes
+underlying array to exactly the requested amount.</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="nb">int</span> <span class="n">resize_smart</span><span class="p">(</span><span class="n">array</span> <span class="bp">self</span><span class="p">,</span> <span class="n">Py_ssize_t</span> <span class="n">n</span><span class="p">)</span> <span class="k">except</span> <span class="o">-</span><span class="mf">1</span>
+</pre></div>
+</div>
+<p>Efficient for small increments; uses growth pattern that delivers
+amortized linear-time appends.</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="kr">inline</span> <span class="kt">array</span> <span class="nf">clone</span><span class="p">(</span><span class="n">array</span> <span class="n">template</span><span class="p">,</span> <span class="n">Py_ssize_t</span> <span class="n">length</span><span class="p">,</span> <span class="n">bint</span> <span class="n">zero</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Fast creation of a new array, given a template array. Type will be same as
+<code class="docutils literal"><span class="pre">template</span></code>. If zero is <code class="docutils literal"><span class="pre">True</span></code>, new array will be initialized with zeroes.</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="kr">inline</span> <span class="kt">array</span> <span class="nf">copy</span><span class="p">(</span><span class="n">array</span> <span class="bp">self</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Make a copy of an array.</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="kr">inline</span> <span class="kt">int</span> <span class="nf">extend_buffer</span><span class="p">(</span><span class="n">array</span> <span class="bp">self</span><span class="p">,</span> <span class="n">char</span><span class="o">*</span> <span class="n">stuff</span><span class="p">,</span> <span class="n">Py_ssize_t</span> <span class="n">n</span><span class="p">)</span> <span class="k">except</span> <span class="o">-</span><span class="mf">1</span>
+</pre></div>
+</div>
+<p>Efficient appending of new data of same type (e.g. of same array type)
+<code class="docutils literal"><span class="pre">n</span></code>: number of elements (not number of bytes!)</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="kr">inline</span> <span class="kt">int</span> <span class="nf">extend</span><span class="p">(</span><span class="n">array</span> <span class="bp">self</span><span class="p">,</span> <span class="n">array</span> <span class="n">other</span><span class="p">)</span> <span class="k">except</span> <span class="o">-</span><span class="mf">1</span>
+</pre></div>
+</div>
+<p>Extend array with data from another array; types must match.</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="kr">inline</span> <span class="kt">void</span> <span class="nf">zero</span><span class="p">(</span><span class="n">array</span> <span class="bp">self</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Set all elements of array to zero.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index_ko.html">
+              <img class="logo" src="../../_static/cythonlogo.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="../../index_ko.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Working with Python arrays</a><ul>
+<li><a class="reference internal" href="#safe-usage-with-memory-views">Safe usage with memory views</a></li>
+<li><a class="reference internal" href="#zero-overhead-unsafe-access-to-raw-c-pointer">Zero-overhead, unsafe access to raw C pointer</a></li>
+<li><a class="reference internal" href="#cloning-extending-arrays">Cloning, extending arrays</a></li>
+<li><a class="reference internal" href="#api-reference">API reference</a><ul>
+<li><a class="reference internal" href="#data-fields">Data fields</a></li>
+<li><a class="reference internal" href="#functions">Functions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/src/tutorial/array.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Stefan Behnel, Robert Bradshaw, Dag Sverre Seljebotn, Greg Ewing, William Stein, Gabriel Gellner, et al..
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6139100-3");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </body>
+</html>

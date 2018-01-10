@@ -1,0 +1,232 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Source Files and Compilation &#8212; 싸이선(Cython) 0.28a0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.28a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="source-files-and-compilation">
+<span id="compilation"></span><h1>Source Files and Compilation<a class="headerlink" href="#source-files-and-compilation" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">See <a class="reference internal" href="../reference/compilation.html#compilation-reference"><span class="std std-ref">Compilation</span></a> reference section for more details</p>
+</div>
+<p>Cython source file names consist of the name of the module followed by a
+<code class="docutils literal"><span class="pre">.pyx</span></code> extension, for example a module called primes would have a source
+file named <code class="file docutils literal"><span class="pre">primes.pyx</span></code>.</p>
+<p>Once you have written your <code class="docutils literal"><span class="pre">.pyx</span></code> file, there are a couple of ways of turning it
+into an extension module. One way is to compile it manually with the Cython
+compiler, e.g.:</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>$ cython primes.pyx
+</pre></div>
+</div>
+<p>This will produce a file called <code class="file docutils literal"><span class="pre">primes.c</span></code>, which then needs to be
+compiled with the C compiler using whatever options are appropriate on your
+platform for generating an extension module. For these options look at the
+official Python documentation.</p>
+<p>The other, and probably better, way is to use the <a class="reference external" href="https://docs.python.org/3/library/distutils.html#module-distutils" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">distutils</span></code></a> extension
+provided with Cython. The benefit of this method is that it will give the
+platform specific compilation options, acting like a stripped down autotools.</p>
+<div class="section" id="basic-setup-py">
+<h2>Basic setup.py<a class="headerlink" href="#basic-setup-py" title="Permalink to this headline">¶</a></h2>
+<p>The distutils extension provided with Cython allows you to pass <code class="docutils literal"><span class="pre">.pyx</span></code> files
+directly to the <code class="docutils literal"><span class="pre">Extension</span></code> constructor in your setup file.</p>
+<p>If you have a single Cython file that you want to turn into a compiled
+extension, say with filename <code class="file docutils literal"><span class="pre">example.pyx</span></code> the associated <code class="file docutils literal"><span class="pre">setup.py</span></code>
+would be:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">from</span> <span class="nn">distutils.core</span> <span class="k">import</span> <span class="n">setup</span>
+<span class="k">from</span> <span class="nn">Cython.Build</span> <span class="k">import</span> <span class="n">cythonize</span>
+
+<span class="n">setup</span><span class="p">(</span>
+    <span class="n">ext_modules</span> <span class="o">=</span> <span class="n">cythonize</span><span class="p">(</span><span class="s">&quot;example.pyx&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>To understand the <code class="file docutils literal"><span class="pre">setup.py</span></code> more fully look at the official
+<a class="reference external" href="https://docs.python.org/3/library/distutils.html#module-distutils" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">distutils</span></code></a> documentation. To compile the extension for use in the
+current directory use:</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>$ python setup.py build_ext --inplace
+</pre></div>
+</div>
+</div>
+<div class="section" id="multiple-cython-files-in-a-package">
+<h2>Multiple Cython Files in a Package<a class="headerlink" href="#multiple-cython-files-in-a-package" title="Permalink to this headline">¶</a></h2>
+<p>To automatically compile multiple Cython files without listing all of them
+explicitly, you can use glob patterns:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="n">setup</span><span class="p">(</span>
+    <span class="n">ext_modules</span> <span class="o">=</span> <span class="n">cythonize</span><span class="p">(</span><span class="s">&quot;package/*.pyx&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>You can also use glob patterns in <code class="xref py py-class docutils literal"><span class="pre">Extension</span></code> objects if you pass
+them through <code class="xref py py-func docutils literal"><span class="pre">cythonize()</span></code>:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="n">extensions</span> <span class="o">=</span> <span class="p">[</span><span class="n">Extension</span><span class="p">(</span><span class="s">&quot;*&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s">&quot;*.pyx&quot;</span><span class="p">])]</span>
+
+<span class="n">setup</span><span class="p">(</span>
+    <span class="n">ext_modules</span> <span class="o">=</span> <span class="n">cythonize</span><span class="p">(</span><span class="n">extensions</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="pyximport">
+<span id="id1"></span><h2>Pyximport<a class="headerlink" href="#pyximport" title="Permalink to this headline">¶</a></h2>
+<p>Cython is a compiler.  Therefore it is natural that people tend to go
+through an edit/compile/test cycle with Cython modules.  <code class="xref py py-mod docutils literal"><span class="pre">pyximport</span></code>
+simplifies this process by executing the “compile” step at need during
+import.  For instance, if you write a Cython module called <code class="file docutils literal"><span class="pre">foo.pyx</span></code>,
+with Pyximport you can import it in a regular Python module like this:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="nn">pyximport</span><span class="p">;</span> <span class="n">pyximport</span><span class="o">.</span><span class="n">install</span><span class="p">()</span>
+<span class="k">import</span> <span class="nn">foo</span>
+</pre></div>
+</div>
+<p>Doing so will result in the compilation of <code class="file docutils literal"><span class="pre">foo.pyx</span></code> (with appropriate
+exceptions if it has an error in it).</p>
+<p>If you would always like to import Cython files without building them specially,
+you can also add the first line above to your <code class="file docutils literal"><span class="pre">sitecustomize.py</span></code>.
+That will install the hook every time you run Python.  Then you can use
+Cython modules just with simple import statements, even like this:</p>
+<div class="highlight-text"><div class="highlight"><pre><span></span>$ python -c &quot;import foo&quot;
+</pre></div>
+</div>
+<p>Note that it is not recommended to let <code class="xref py py-mod docutils literal"><span class="pre">pyximport</span></code> build code
+on end user side as it hooks into their import system.  The best way
+to cater for end users is to provide pre-built binary packages in the
+<a class="reference external" href="https://wheel.readthedocs.io/">wheel</a> packaging format.</p>
+<div class="section" id="dependency-handling">
+<h3>Dependency Handling<a class="headerlink" href="#dependency-handling" title="Permalink to this headline">¶</a></h3>
+<p>Since <code class="xref py py-mod docutils literal"><span class="pre">pyximport</span></code> does not use <cite>cythonize()</cite> internally, it currently
+requires a different setup for dependencies.  It is possible to declare that
+your module depends on multiple files, (likely <code class="docutils literal"><span class="pre">.h</span></code> and <code class="docutils literal"><span class="pre">.pxd</span></code> files).
+If your Cython module is named <code class="docutils literal"><span class="pre">foo</span></code> and thus has the filename
+<code class="file docutils literal"><span class="pre">foo.pyx</span></code> then you should create another file in the same directory
+called <code class="file docutils literal"><span class="pre">foo.pyxdep</span></code>.  The <code class="file docutils literal"><span class="pre">modname.pyxdep</span></code> file can be a list of
+filenames or “globs” (like <code class="docutils literal"><span class="pre">*.pxd</span></code> or <code class="docutils literal"><span class="pre">include/*.h</span></code>).  Each filename or
+glob must be on a separate line.  Pyximport will check the file date for each
+of those files before deciding whether to rebuild the module.  In order to
+keep track of the fact that the dependency has been handled, Pyximport updates
+the modification time of your “.pyx” source file.  Future versions may do
+something more sophisticated like informing distutils of the dependencies
+directly.</p>
+</div>
+<div class="section" id="limitations">
+<h3>Limitations<a class="headerlink" href="#limitations" title="Permalink to this headline">¶</a></h3>
+<p>Pyximport does not give you any control over how your Cython file is
+compiled.  Usually the defaults are fine.  You might run into problems if
+you wanted to write your program in half-C, half-Cython and build them
+into a single library.</p>
+<p>Pyximport does not hide the Distutils/GCC warnings and errors generated
+by the import process.  Arguably this will give you better feedback if
+something went wrong and why.  And if nothing went wrong it will give you
+the warm fuzzy feeling that pyximport really did rebuild your module as it
+was supposed to.</p>
+<p>Basic module reloading support is available with the option <code class="docutils literal"><span class="pre">reload_support=True</span></code>.
+Note that this will generate a new module filename for each build and thus
+end up loading multiple shared libraries into memory over time.  CPython does
+not support reloading shared libraries as such.</p>
+<p>Pyximport puts both your <code class="docutils literal"><span class="pre">.c</span></code> file and the platform-specific binary into
+a separate build directory, usually <code class="docutils literal"><span class="pre">$HOME/.pyxblx/</span></code>.  To copy it back
+into the package hierarchy (usually next to the source file) for manual
+reuse, you can pass the option <code class="docutils literal"><span class="pre">inplace=True</span></code>.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index_ko.html">
+              <img class="logo" src="../../_static/cythonlogo.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="../../index_ko.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Source Files and Compilation</a><ul>
+<li><a class="reference internal" href="#basic-setup-py">Basic setup.py</a></li>
+<li><a class="reference internal" href="#multiple-cython-files-in-a-package">Multiple Cython Files in a Package</a></li>
+<li><a class="reference internal" href="#pyximport">Pyximport</a><ul>
+<li><a class="reference internal" href="#dependency-handling">Dependency Handling</a></li>
+<li><a class="reference internal" href="#limitations">Limitations</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/src/userguide/source_files_and_compilation.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Stefan Behnel, Robert Bradshaw, Dag Sverre Seljebotn, Greg Ewing, William Stein, Gabriel Gellner, et al..
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6139100-3");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </body>
+</html>

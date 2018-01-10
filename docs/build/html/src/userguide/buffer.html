@@ -1,0 +1,294 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Implementing the buffer protocol &#8212; 싸이선(Cython) 0.28a0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.28a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Using Parallelism" href="parallelism.html" />
+    <link rel="prev" title="Typed Memoryviews" href="memoryviews.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="parallelism.html" title="Using Parallelism"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="memoryviews.html" title="Typed Memoryviews"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index_ko.html" accesskey="U">사용자 가이드</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="implementing-the-buffer-protocol">
+<span id="buffer"></span><h1>Implementing the buffer protocol<a class="headerlink" href="#implementing-the-buffer-protocol" title="Permalink to this headline">¶</a></h1>
+<p>Cython objects can expose memory buffers to Python code
+by implementing the “buffer protocol”.
+This chapter shows how to implement the protocol
+and make use of the memory managed by an extension type from NumPy.</p>
+<div class="section" id="a-matrix-class">
+<h2>A matrix class<a class="headerlink" href="#a-matrix-class" title="Permalink to this headline">¶</a></h2>
+<p>The following Cython/C++ code implements a matrix of floats,
+where the number of columns is fixed at construction time
+but rows can be added dynamically.</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="c"># matrix.pyx</span>
+<span class="k">from</span> <span class="nn">libcpp.vector</span> <span class="k">cimport</span> <span class="n">vector</span>
+
+<span class="k">cdef</span> <span class="k">class</span> <span class="nf">Matrix</span><span class="p">:</span>
+    <span class="k">cdef</span> <span class="kt">unsigned</span> <span class="nf">ncols</span>
+    <span class="k">cdef</span> <span class="kt">vector</span>[<span class="kt">float</span>] <span class="nf">v</span>
+
+    <span class="k">def</span> <span class="nf">__cinit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unsigned</span> <span class="n">ncols</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ncols</span> <span class="o">=</span> <span class="n">ncols</span>
+
+    <span class="k">def</span> <span class="nf">add_row</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adds a row, initially zero-filled.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ncols</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>There are no methods to do anything productive with the matrices’ contents.
+We could implement custom <code class="docutils literal"><span class="pre">__getitem__</span></code>, <code class="docutils literal"><span class="pre">__setitem__</span></code>, etc. for this,
+but instead we’ll use the buffer protocol to expose the matrix’s data to Python
+so we can use NumPy to do useful work.</p>
+<p>Implementing the buffer protocol requires adding two methods,
+<code class="docutils literal"><span class="pre">__getbuffer__</span></code> and <code class="docutils literal"><span class="pre">__releasebuffer__</span></code>,
+which Cython handles specially.</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">from</span> <span class="nn">cpython</span> <span class="k">cimport</span> <span class="n">Py_buffer</span>
+<span class="k">from</span> <span class="nn">libcpp.vector</span> <span class="k">cimport</span> <span class="n">vector</span>
+
+<span class="k">cdef</span> <span class="k">class</span> <span class="nf">Matrix</span><span class="p">:</span>
+    <span class="k">cdef</span> <span class="kt">Py_ssize_t</span> <span class="nf">ncols</span>
+    <span class="k">cdef</span> <span class="kt">Py_ssize_t</span> <span class="kt">shape</span>[2]
+    <span class="k">cdef</span> <span class="kt">Py_ssize_t</span> <span class="kt">strides</span>[2]
+    <span class="k">cdef</span> <span class="kt">vector</span>[<span class="kt">float</span>] <span class="nf">v</span>
+
+    <span class="k">def</span> <span class="nf">__cinit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Py_ssize_t</span> <span class="n">ncols</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ncols</span> <span class="o">=</span> <span class="n">ncols</span>
+
+    <span class="k">def</span> <span class="nf">add_row</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adds a row, initially zero-filled.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ncols</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getbuffer__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Py_buffer</span> <span class="o">*</span><span class="nb">buffer</span><span class="p">,</span> <span class="nb">int</span> <span class="n">flags</span><span class="p">):</span>
+        <span class="k">cdef</span> <span class="kt">Py_ssize_t</span> <span class="nf">itemsize</span> <span class="o">=</span> <span class="n">sizeof</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">[</span><span class="mf">0</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncols</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mf">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncols</span>
+
+        <span class="c"># Stride 1 is the distance, in bytes, between two items in a row;</span>
+        <span class="c"># this is the distance between two adjacent items in the vector.</span>
+        <span class="c"># Stride 0 is the distance between the first elements of adjacent rows.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="mf">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">Py_ssize_t</span><span class="o">&gt;</span><span class="p">(</span>  <span class="o">&lt;</span><span class="n">char</span> <span class="o">*&gt;&amp;</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">[</span><span class="mf">1</span><span class="p">])</span>
+                                       <span class="o">-</span> <span class="o">&lt;</span><span class="n">char</span> <span class="o">*&gt;&amp;</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">[</span><span class="mf">0</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="mf">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncols</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="mf">1</span><span class="p">]</span>
+
+        <span class="nb">buffer</span><span class="o">.</span><span class="n">buf</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">char</span> <span class="o">*&gt;&amp;</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">[</span><span class="mf">0</span><span class="p">])</span>
+        <span class="nb">buffer</span><span class="o">.</span><span class="n">format</span> <span class="o">=</span> <span class="s">&#39;f&#39;</span>                     <span class="c"># float</span>
+        <span class="nb">buffer</span><span class="o">.</span><span class="n">internal</span> <span class="o">=</span> <span class="bp">NULL</span>                  <span class="c"># see References</span>
+        <span class="nb">buffer</span><span class="o">.</span><span class="n">itemsize</span> <span class="o">=</span> <span class="n">itemsize</span>
+        <span class="nb">buffer</span><span class="o">.</span><span class="n">len</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">*</span> <span class="n">itemsize</span>   <span class="c"># product(shape) * itemsize</span>
+        <span class="nb">buffer</span><span class="o">.</span><span class="n">ndim</span> <span class="o">=</span> <span class="mf">2</span>
+        <span class="nb">buffer</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="nb">buffer</span><span class="o">.</span><span class="n">readonly</span> <span class="o">=</span> <span class="mf">0</span>
+        <span class="nb">buffer</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shape</span>
+        <span class="nb">buffer</span><span class="o">.</span><span class="n">strides</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">strides</span>
+        <span class="nb">buffer</span><span class="o">.</span><span class="n">suboffsets</span> <span class="o">=</span> <span class="bp">NULL</span>                <span class="c"># for pointer arrays only</span>
+
+    <span class="k">def</span> <span class="nf">__releasebuffer__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Py_buffer</span> <span class="o">*</span><span class="nb">buffer</span><span class="p">):</span>
+        <span class="k">pass</span>
+</pre></div>
+</div>
+<p>The method <code class="docutils literal"><span class="pre">Matrix.__getbuffer__</span></code> fills a descriptor structure,
+called a <code class="docutils literal"><span class="pre">Py_buffer</span></code>, that is defined by the Python C-API.
+It contains a pointer to the actual buffer in memory,
+as well as metadata about the shape of the array and the strides
+(step sizes to get from one element or row to the next).
+Its <code class="docutils literal"><span class="pre">shape</span></code> and <code class="docutils literal"><span class="pre">strides</span></code> members are pointers
+that must point to arrays of type and size <code class="docutils literal"><span class="pre">Py_ssize_t[ndim]</span></code>.
+These arrays have to stay alive as long as any buffer views the data,
+so we store them on the <code class="docutils literal"><span class="pre">Matrix</span></code> object as members.</p>
+<p>The code is not yet complete, but we can already compile it
+and test the basic functionality.</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="o">&gt;&gt;&gt;</span> <span class="k">from</span> <span class="nn">matrix</span> <span class="k">import</span> <span class="n">Matrix</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">m</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="mf">10</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([],</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span> <span class="mf">10</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">float32</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">m</span><span class="o">.</span><span class="n">add_row</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">a</span><span class="p">[:]</span> <span class="o">=</span> <span class="mf">1</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">m</span><span class="o">.</span><span class="n">add_row</span><span class="p">()</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">a</span>
+<span class="n">array</span><span class="p">([[</span> <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">],</span>
+       <span class="p">[</span> <span class="mf">0.</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">,</span>  <span class="mf">0.</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">float32</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now we can view the <code class="docutils literal"><span class="pre">Matrix</span></code> as a NumPy <code class="docutils literal"><span class="pre">ndarray</span></code>,
+and modify its contents using standard NumPy operations.</p>
+</div>
+<div class="section" id="memory-safety-and-reference-counting">
+<h2>Memory safety and reference counting<a class="headerlink" href="#memory-safety-and-reference-counting" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">Matrix</span></code> class as implemented so far is unsafe.
+The <code class="docutils literal"><span class="pre">add_row</span></code> operation can move the underlying buffer,
+which invalidates any NumPy (or other) view on the data.
+If you try to access values after an <code class="docutils literal"><span class="pre">add_row</span></code> call,
+you’ll get outdated values or a segfault.</p>
+<p>This is where <code class="docutils literal"><span class="pre">__releasebuffer__</span></code> comes in.
+We can add a reference count to each matrix,
+and lock it for mutation whenever a view exists.</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="k">class</span> <span class="nf">Matrix</span><span class="p">:</span>
+    <span class="c"># ...</span>
+    <span class="k">cdef</span> <span class="kt">int</span> <span class="nf">view_count</span>
+
+    <span class="k">def</span> <span class="nf">__cinit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Py_ssize_t</span> <span class="n">ncols</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ncols</span> <span class="o">=</span> <span class="n">ncols</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view_count</span> <span class="o">=</span> <span class="mf">0</span>
+
+    <span class="k">def</span> <span class="nf">add_row</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">view_count</span> <span class="o">&gt;</span> <span class="mf">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;can&#39;t add row while being viewed&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncols</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getbuffer__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Py_buffer</span> <span class="o">*</span><span class="nb">buffer</span><span class="p">,</span> <span class="nb">int</span> <span class="n">flags</span><span class="p">):</span>
+        <span class="c"># ... as before</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">view_count</span> <span class="o">+=</span> <span class="mf">1</span>
+
+    <span class="k">def</span> <span class="nf">__releasebuffer__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Py_buffer</span> <span class="o">*</span><span class="nb">buffer</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view_count</span> <span class="o">-=</span> <span class="mf">1</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="flags">
+<h2>Flags<a class="headerlink" href="#flags" title="Permalink to this headline">¶</a></h2>
+<p>We skipped some input validation in the code.
+The <code class="docutils literal"><span class="pre">flags</span></code> argument to <code class="docutils literal"><span class="pre">__getbuffer__</span></code> comes from <code class="docutils literal"><span class="pre">np.asarray</span></code>
+(and other clients) and is an OR of boolean flags
+that describe the kind of array that is requested.
+Strictly speaking, if the flags contain <code class="docutils literal"><span class="pre">PyBUF_ND</span></code>, <code class="docutils literal"><span class="pre">PyBUF_SIMPLE</span></code>,
+or <code class="docutils literal"><span class="pre">PyBUF_F_CONTIGUOUS</span></code>, <code class="docutils literal"><span class="pre">__getbuffer__</span></code> must raise a <code class="docutils literal"><span class="pre">BufferError</span></code>.
+These macros can be <code class="docutils literal"><span class="pre">cimport</span></code>’d from <code class="docutils literal"><span class="pre">cpython.buffer</span></code>.</p>
+<p>(The matrix-in-vector structure actually conforms to <code class="docutils literal"><span class="pre">PyBUF_ND</span></code>,
+but that would prohibit <code class="docutils literal"><span class="pre">__getbuffer__</span></code> from filling in the strides.
+A single-row matrix is F-contiguous, but a larger matrix is not.)</p>
+</div>
+<div class="section" id="references">
+<h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
+<p>The buffer interface used here is set out in
+<span class="target" id="index-0"></span><a class="pep reference external" href="https://www.python.org/dev/peps/pep-3118"><strong>PEP 3118</strong></a>, Revising the buffer protocol.</p>
+<p>A tutorial for using this API from C is on Jake Vanderplas’s blog,
+<a class="reference external" href="https://jakevdp.github.io/blog/2014/05/05/introduction-to-the-python-buffer-protocol/">An Introduction to the Python Buffer Protocol</a>.</p>
+<p>Reference documentation is available for
+<a class="reference external" href="https://docs.python.org/3/c-api/buffer.html">Python 3</a>
+and <a class="reference external" href="https://docs.python.org/2.7/c-api/buffer.html">Python 2</a>.
+The Py2 documentation also describes an older buffer protocol
+that is no longer in use;
+since Python 2.6, the <span class="target" id="index-1"></span><a class="pep reference external" href="https://www.python.org/dev/peps/pep-3118"><strong>PEP 3118</strong></a> protocol has been implemented,
+and the older protocol is only relevant for legacy code.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index_ko.html">
+              <img class="logo" src="../../_static/cythonlogo.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="../../index_ko.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Implementing the buffer protocol</a><ul>
+<li><a class="reference internal" href="#a-matrix-class">A matrix class</a></li>
+<li><a class="reference internal" href="#memory-safety-and-reference-counting">Memory safety and reference counting</a></li>
+<li><a class="reference internal" href="#flags">Flags</a></li>
+<li><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="memoryviews.html"
+                        title="previous chapter">Typed Memoryviews</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="parallelism.html"
+                        title="next chapter">Using Parallelism</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/src/userguide/buffer.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="parallelism.html" title="Using Parallelism"
+             >next</a></li>
+        <li class="right" >
+          <a href="memoryviews.html" title="Typed Memoryviews"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index_ko.html" >사용자 가이드</a> &#187;</li> 
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Stefan Behnel, Robert Bradshaw, Dag Sverre Seljebotn, Greg Ewing, William Stein, Gabriel Gellner, et al..
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6139100-3");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </body>
+</html>

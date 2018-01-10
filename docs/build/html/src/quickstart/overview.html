@@ -1,0 +1,175 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Cython - an overview &#8212; 싸이선(Cython) 0.28a0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.28a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cython-an-overview">
+<h1>Cython - an overview<a class="headerlink" href="#cython-an-overview" title="Permalink to this headline">¶</a></h1>
+<p>[Cython] is a programming language that makes writing C extensions
+for the Python language as easy as Python itself.  It aims to become
+a superset of the <a class="reference internal" href="overview_ko.html#python" id="id1">[Python]</a> language which gives it high-level,
+object-oriented, functional, and dynamic programming.  Its main feature
+on top of these is support for optional static type declarations as
+part of the language.  The source code gets translated into optimized
+C/C++ code and compiled as Python extension modules.  This allows for
+both very fast program execution and tight integration with external C
+libraries, while keeping up the high programmer productivity for
+which the Python language is well known.</p>
+<p>The primary Python execution environment is commonly referred to as
+CPython, as it is written in C.  Other major implementations use Java
+(Jython <a class="reference internal" href="overview_ko.html#jython" id="id2">[Jython]</a>), C# (IronPython <a class="reference internal" href="overview_ko.html#ironpython" id="id3">[IronPython]</a>) and Python itself
+(PyPy <a class="reference internal" href="overview_ko.html#pypy" id="id4">[PyPy]</a>).  Written in C, CPython has been conducive to wrapping
+many external libraries that interface through the C language.  It
+has, however, remained non trivial to write the necessary glue code in
+C, especially for programmers who are more fluent in a high-level
+language like Python than in a close-to-the-metal language like C.</p>
+<p>Originally based on the well-known Pyrex <a class="reference internal" href="../tutorial/related_work_ko.html#pyrex" id="id5">[Pyrex]</a>, the Cython project
+has approached this problem by means of a source code compiler that
+translates Python code to equivalent C code.  This code is executed
+within the CPython runtime environment, but at the speed of compiled C
+and with the ability to call directly into C libraries.
+At the same time, it keeps the original interface of the Python
+source code, which makes it directly usable from Python code.  These
+two-fold characteristics enable Cython’s two major use cases:
+extending the CPython interpreter with fast binary modules, and
+interfacing Python code with external C libraries.</p>
+<p>While Cython can compile (most) regular Python code, the generated C
+code usually gains major (and sometime impressive) speed improvements
+from optional static type declarations for both Python and C types.
+These allow Cython to assign C semantics to parts of the code, and to
+translate them into very efficient C code.  Type declarations can
+therefore be used for two purposes: for moving code sections from
+dynamic Python semantics into static-and-fast C semantics, but also
+for directly manipulating types defined in external libraries.  Cython
+thus merges the two worlds into a very broadly applicable programming
+language.</p>
+<table class="docutils citation" frame="void" id="cython" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[Cython]</td><td>G. Ewing, R. W. Bradshaw, S. Behnel, D. S. Seljebotn et al.,
+The Cython compiler, <a class="reference external" href="http://cython.org">http://cython.org</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="ironpython" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[IronPython]</a></td><td>Jim Hugunin et al., <a class="reference external" href="http://www.codeplex.com/IronPython">http://www.codeplex.com/IronPython</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="jython" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[Jython]</a></td><td>J. Huginin, B. Warsaw, F. Bock, et al.,
+Jython: Python for the Java platform, <a class="reference external" href="http://www.jython.org">http://www.jython.org</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="pypy" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id4">[PyPy]</a></td><td>The PyPy Group, PyPy: a Python implementation written in Python,
+<a class="reference external" href="http://pypy.org">http://pypy.org</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="pyrex" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[Pyrex]</a></td><td>G. Ewing, Pyrex: C-Extensions for Python,
+<a class="reference external" href="http://www.cosc.canterbury.ac.nz/greg.ewing/python/Pyrex/">http://www.cosc.canterbury.ac.nz/greg.ewing/python/Pyrex/</a></td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="python" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[Python]</a></td><td>G. van Rossum et al., The Python programming language,
+<a class="reference external" href="http://python.org">http://python.org</a>.</td></tr>
+</tbody>
+</table>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index_ko.html">
+              <img class="logo" src="../../_static/cythonlogo.png" alt="Logo"/>
+            </a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/src/quickstart/overview.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Stefan Behnel, Robert Bradshaw, Dag Sverre Seljebotn, Greg Ewing, William Stein, Gabriel Gellner, et al..
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6139100-3");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </body>
+</html>

@@ -1,0 +1,211 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>메모리 할당 &#8212; 싸이선(Cython) 0.28a0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.28a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="순수 파이썬 모듈" href="pure_ko.html" />
+    <link rel="prev" title="유니코드와 문자열 전달" href="strings_ko.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="pure_ko.html" title="순수 파이썬 모듈"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="strings_ko.html" title="유니코드와 문자열 전달"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index_ko.html" accesskey="U">튜토리얼</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="memory-allocation">
+<span id="id1"></span><h1>메모리 할당<a class="headerlink" href="#memory-allocation" title="Permalink to this headline">¶</a></h1>
+<p>Dynamic memory allocation is mostly a non-issue in Python.  Everything is an
+object, and the reference counting system and garbage collector automatically
+return memory to the system when it is no longer being used.</p>
+<p>When it comes to more low-level data buffers, Cython has special support for
+(multi-dimensional) arrays of simple types via NumPy, memory views or Python’s
+stdlib array type.  They are full featured, garbage collected and much easier
+to work with than bare pointers in C, while still retaining the speed and static
+typing benefits.
+See <a class="reference internal" href="array_ko.html#array-array"><span class="std std-ref">파이썬 배열 관련 작업</span></a> and <a class="reference internal" href="../userguide/memoryviews.html#memoryviews"><span class="std std-ref">Typed Memoryviews</span></a>.</p>
+<p>In some situations, however, these objects can still incur an unacceptable
+amount of overhead, which can then makes a case for doing manual memory
+management in C.</p>
+<p>Simple C values and structs (such as a local variable <code class="docutils literal"><span class="pre">cdef</span> <span class="pre">double</span> <span class="pre">x</span></code>) are
+usually allocated on the stack and passed by value, but for larger and more
+complicated objects (e.g. a dynamically-sized list of doubles), the memory must
+be manually requested and released.  C provides the functions <code class="xref c c-func docutils literal"><span class="pre">malloc()</span></code>,
+<code class="xref c c-func docutils literal"><span class="pre">realloc()</span></code>, and <code class="xref c c-func docutils literal"><span class="pre">free()</span></code> for this purpose, which can be imported
+in cython from <code class="docutils literal"><span class="pre">clibc.stdlib</span></code>. Their signatures are:</p>
+<div class="highlight-c"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="o">*</span> <span class="n">malloc</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">size</span><span class="p">)</span>
+<span class="kt">void</span><span class="o">*</span> <span class="n">realloc</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">ptr</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">size</span><span class="p">)</span>
+<span class="kt">void</span> <span class="n">free</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">ptr</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A very simple example of malloc usage is the following:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">import</span> <span class="nn">random</span>
+<span class="k">from</span> <span class="nn">libc.stdlib</span> <span class="k">cimport</span> <span class="n">malloc</span><span class="p">,</span> <span class="n">free</span>
+
+<span class="k">def</span> <span class="nf">random_noise</span><span class="p">(</span><span class="nb">int</span> <span class="n">number</span><span class="o">=</span><span class="mf">1</span><span class="p">):</span>
+    <span class="k">cdef</span> <span class="kt">int</span> <span class="nf">i</span>
+    <span class="c"># allocate number * sizeof(double) bytes of memory</span>
+    <span class="k">cdef</span> <span class="kt">double</span> *<span class="nf">my_array</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">double</span> <span class="o">*&gt;</span><span class="n">malloc</span><span class="p">(</span><span class="n">number</span> <span class="o">*</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">double</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">my_array</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">MemoryError</span><span class="p">()</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ran</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">normalvariate</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
+            <span class="n">my_array</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ran</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="mf">1</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">[</span> <span class="n">my_array</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number</span><span class="p">)</span> <span class="p">]</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="c"># return the previously allocated memory to the system</span>
+        <span class="n">free</span><span class="p">(</span><span class="n">my_array</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that the C-API functions for allocating memory on the Python heap
+are generally preferred over the low-level C functions above as the
+memory they provide is actually accounted for in Python’s internal
+memory management system.  They also have special optimisations for
+smaller memory blocks, which speeds up their allocation by avoiding
+costly operating system calls.</p>
+<p>The C-API functions can be found in the <code class="docutils literal"><span class="pre">cpython.mem</span></code> standard
+declarations file:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">from</span> <span class="nn">cpython.mem</span> <span class="k">cimport</span> <span class="n">PyMem_Malloc</span><span class="p">,</span> <span class="n">PyMem_Realloc</span><span class="p">,</span> <span class="n">PyMem_Free</span>
+</pre></div>
+</div>
+<p>Their interface and usage is identical to that of the corresponding
+low-level C functions.</p>
+<p>One important thing to remember is that blocks of memory obtained with
+<code class="xref c c-func docutils literal"><span class="pre">malloc()</span></code> or <a class="reference external" href="https://docs.python.org/3/c-api/memory.html#c.PyMem_Malloc" title="(in Python v3.6)"><code class="xref c c-func docutils literal"><span class="pre">PyMem_Malloc()</span></code></a> <em>must</em> be manually released
+with a corresponding call to <code class="xref c c-func docutils literal"><span class="pre">free()</span></code> or <a class="reference external" href="https://docs.python.org/3/c-api/memory.html#c.PyMem_Free" title="(in Python v3.6)"><code class="xref c c-func docutils literal"><span class="pre">PyMem_Free()</span></code></a>
+when they are no longer used (and <em>must</em> always use the matching
+type of free function).  Otherwise, they won’t be reclaimed until the
+python process exits.  This is called a memory leak.</p>
+<p>If a chunk of memory needs a larger lifetime than can be managed by a
+<code class="docutils literal"><span class="pre">try..finally</span></code> block, another helpful idiom is to tie its lifetime
+to a Python object to leverage the Python runtime’s memory management,
+e.g.:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="k">class</span> <span class="nf">SomeMemory</span><span class="p">:</span>
+
+    <span class="k">cdef</span> <span class="kt">double</span>* <span class="nf">data</span>
+
+    <span class="k">def</span> <span class="nf">__cinit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">number</span><span class="p">):</span>
+        <span class="c"># allocate some memory (uninitialised, may contain arbitrary data)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">double</span><span class="o">*&gt;</span> <span class="n">PyMem_Malloc</span><span class="p">(</span><span class="n">number</span> <span class="o">*</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">double</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">MemoryError</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">resize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size_t</span> <span class="n">new_number</span><span class="p">):</span>
+        <span class="c"># Allocates new_number * sizeof(double) bytes,</span>
+        <span class="c"># preserving the current content and making a best-effort to</span>
+        <span class="c"># re-use the original data location.</span>
+        <span class="n">mem</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">double</span><span class="o">*&gt;</span> <span class="n">PyMem_Realloc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">new_number</span> <span class="o">*</span> <span class="n">sizeof</span><span class="p">(</span><span class="n">double</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mem</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">MemoryError</span><span class="p">()</span>
+        <span class="c"># Only overwrite the pointer if the memory was really reallocated.</span>
+        <span class="c"># On error (mem is NULL), the originally memory has not been freed.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">mem</span>
+
+    <span class="k">def</span> <span class="nf">__dealloc__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">PyMem_Free</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>     <span class="c"># no-op if self.data is NULL</span>
+</pre></div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index_ko.html">
+              <img class="logo" src="../../_static/cythonlogo.png" alt="Logo"/>
+            </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="strings_ko.html"
+                        title="previous chapter">유니코드와 문자열 전달</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pure_ko.html"
+                        title="next chapter">순수 파이썬 모듈</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/src/tutorial/memory_allocation_ko.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="pure_ko.html" title="순수 파이썬 모듈"
+             >next</a></li>
+        <li class="right" >
+          <a href="strings_ko.html" title="유니코드와 문자열 전달"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index_ko.html" >튜토리얼</a> &#187;</li> 
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Stefan Behnel, Robert Bradshaw, Dag Sverre Seljebotn, Greg Ewing, William Stein, Gabriel Gellner, et al..
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6139100-3");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </body>
+</html>

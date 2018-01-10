@@ -1,0 +1,158 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Pythran as a Numpy backend &#8212; 싸이선(Cython) 0.28a0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.28a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="참조서 가이드" href="../reference/index_ko.html" />
+    <link rel="prev" title="Cython for NumPy users" href="numpy_tutorial.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../reference/index_ko.html" title="참조서 가이드"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="numpy_tutorial.html" title="Cython for NumPy users"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index_ko.html" accesskey="U">사용자 가이드</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pythran-as-a-numpy-backend">
+<span id="numpy-pythran"></span><h1>Pythran as a Numpy backend<a class="headerlink" href="#pythran-as-a-numpy-backend" title="Permalink to this headline">¶</a></h1>
+<p>Using the flag <code class="docutils literal"><span class="pre">--np-pythran</span></code>, it is possible to use the <a class="reference external" href="https://github.com/serge-sans-paille/pythran">Pythran</a> numpy
+implementation for numpy related operations. One advantage to use this backend
+is that the Pythran implementation uses C++ expression templates to save memory
+transfers and can benefit from SIMD instructions of modern CPU.</p>
+<p>This can lead to really interesting speedup in some cases, going from 2 up to
+16, depending on the targeted CPU architecture and the original algorithm.</p>
+<p>Please note that this feature is experimental.</p>
+<div class="section" id="usage-example-with-distutils">
+<h2>Usage example with distutils<a class="headerlink" href="#usage-example-with-distutils" title="Permalink to this headline">¶</a></h2>
+<p>You first need to install Pythran. See its <a class="reference external" href="https://pythonhosted.org/pythran/MANUAL.html">documentation</a> for more information.</p>
+<p>Then, simply add a <code class="docutils literal"><span class="pre">cython:</span> <span class="pre">np_pythran=True</span></code> directive at the top of the
+Python files that needs to be compiled using Pythran numpy support.</p>
+<p>Here is an example of a simple <code class="docutils literal"><span class="pre">setup.py</span></code> file using distutils:</p>
+<div class="code highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">distutils.core</span> <span class="kn">import</span> <span class="n">setup</span>
+<span class="kn">from</span> <span class="nn">Cython.Build</span> <span class="kn">import</span> <span class="n">cythonize</span>
+
+<span class="n">setup</span><span class="p">(</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;My hello app&quot;</span><span class="p">,</span>
+    <span class="n">ext_modules</span> <span class="o">=</span> <span class="n">cythonize</span><span class="p">(</span><span class="s1">&#39;hello_pythran.pyx&#39;</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Then, with the following header in <code class="docutils literal"><span class="pre">hello_pythran.pyx</span></code>:</p>
+<div class="code highlight-python"><div class="highlight"><pre><span></span><span class="c1"># cython: np_pythran=True</span>
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">hello_pythran.pyx</span></code> will be compiled using Pythran numpy support.</p>
+<p>Please note that Pythran can further be tweaked by adding settings in the
+<code class="docutils literal"><span class="pre">$HOME/.pythranrc</span></code> file. For instance, this can be used to enable <a class="reference external" href="https://github.com/NumScale/boost.simd">Boost.SIMD</a> support.
+See the <a class="reference external" href="https://pythonhosted.org/pythran/MANUAL.html#customizing-your-pythranrc">Pythran user manual</a> for
+more information.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index_ko.html">
+              <img class="logo" src="../../_static/cythonlogo.png" alt="Logo"/>
+            </a></p>
+  <h3><a href="../../index_ko.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Pythran as a Numpy backend</a><ul>
+<li><a class="reference internal" href="#usage-example-with-distutils">Usage example with distutils</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="numpy_tutorial.html"
+                        title="previous chapter">Cython for NumPy users</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../reference/index_ko.html"
+                        title="next chapter">참조서 가이드</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/src/userguide/numpy_pythran.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../reference/index_ko.html" title="참조서 가이드"
+             >next</a></li>
+        <li class="right" >
+          <a href="numpy_tutorial.html" title="Cython for NumPy users"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index_ko.html" >사용자 가이드</a> &#187;</li> 
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Stefan Behnel, Robert Bradshaw, Dag Sverre Seljebotn, Greg Ewing, William Stein, Gabriel Gellner, et al..
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6139100-3");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </body>
+</html>

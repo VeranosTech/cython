@@ -32,3 +32,4 @@ TAGS
 MANIFEST
 
 .tox
+!docs/build/

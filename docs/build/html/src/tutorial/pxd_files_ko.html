@@ -1,0 +1,163 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pxd 파일 &#8212; 싸이선(Cython) 0.28a0 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.28a0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="주의사항" href="caveats_ko.html" />
+    <link rel="prev" title="확장 자료형 (cdef 클래스)" href="cdef_classes_ko.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="caveats_ko.html" title="주의사항"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="cdef_classes_ko.html" title="확장 자료형 (cdef 클래스)"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index_ko.html" accesskey="U">튜토리얼</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pxd">
+<h1>pxd 파일<a class="headerlink" href="#pxd" title="Permalink to this headline">¶</a></h1>
+<p>In addition to the <code class="docutils literal"><span class="pre">.pyx</span></code> source files, Cython uses <code class="docutils literal"><span class="pre">.pxd</span></code> files
+which work like C header files – they contain Cython declarations
+(and sometimes code sections) which are only meant for inclusion by
+Cython modules.  A <code class="docutils literal"><span class="pre">pxd</span></code> file is imported into a <code class="docutils literal"><span class="pre">pyx</span></code> module by
+using the <code class="docutils literal"><span class="pre">cimport</span></code> keyword.</p>
+<p><code class="docutils literal"><span class="pre">pxd</span></code> files have many use-cases:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first">They can be used for sharing external C declarations.</p>
+</li>
+<li><p class="first">They can contain functions which are well suited for inlining by
+the C compiler. Such functions should be marked <code class="docutils literal"><span class="pre">inline</span></code>, example:</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="kr">inline</span> <span class="kt">int</span> <span class="nf">int_min</span><span class="p">(</span><span class="nb">int</span> <span class="n">a</span><span class="p">,</span> <span class="nb">int</span> <span class="n">b</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">b</span> <span class="k">if</span> <span class="n">b</span> <span class="o">&lt;</span> <span class="n">a</span> <span class="k">else</span> <span class="n">a</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">When accompanying an equally named <code class="docutils literal"><span class="pre">pyx</span></code> file, they
+provide a Cython interface to the Cython module so that other
+Cython modules can communicate with it using a more efficient
+protocol than the Python one.</p>
+</li>
+</ol>
+</div></blockquote>
+<p>In our integration example, we might break it up into <code class="docutils literal"><span class="pre">pxd</span></code> files like this:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first">Add a <code class="docutils literal"><span class="pre">cmath.pxd</span></code> function which defines the C functions available from
+the C <code class="docutils literal"><span class="pre">math.h</span></code> header file, like <code class="docutils literal"><span class="pre">sin</span></code>. Then one would simply do
+<code class="docutils literal"><span class="pre">from</span> <span class="pre">cmath</span> <span class="pre">cimport</span> <span class="pre">sin</span></code> in <code class="docutils literal"><span class="pre">integrate.pyx</span></code>.</p>
+</li>
+<li><p class="first">Add a <code class="docutils literal"><span class="pre">integrate.pxd</span></code> so that other modules written in Cython
+can define fast custom functions to integrate.</p>
+<div class="highlight-cython"><div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="k">class</span> <span class="nf">Function</span><span class="p">:</span>
+    <span class="k">cpdef</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">double</span> <span class="n">x</span><span class="p">)</span>
+<span class="k">cpdef</span> <span class="nf">integrate</span><span class="p">(</span><span class="n">Function</span> <span class="n">f</span><span class="p">,</span> <span class="n">double</span> <span class="n">a</span><span class="p">,</span>
+                <span class="n">double</span> <span class="n">b</span><span class="p">,</span> <span class="nb">int</span> <span class="n">N</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that if you have a cdef class with attributes, the attributes must
+be declared in the class declaration <code class="docutils literal"><span class="pre">pxd</span></code> file (if you use one), not
+the <code class="docutils literal"><span class="pre">pyx</span></code> file. The compiler will tell you about this.</p>
+</li>
+</ol>
+</div></blockquote>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../index_ko.html">
+              <img class="logo" src="../../_static/cythonlogo.png" alt="Logo"/>
+            </a></p>
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="cdef_classes_ko.html"
+                        title="previous chapter">확장 자료형 (cdef 클래스)</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="caveats_ko.html"
+                        title="next chapter">주의사항</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/src/tutorial/pxd_files_ko.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="caveats_ko.html" title="주의사항"
+             >next</a></li>
+        <li class="right" >
+          <a href="cdef_classes_ko.html" title="확장 자료형 (cdef 클래스)"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index_ko.html">싸이선(Cython) 0.28a0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index_ko.html" >튜토리얼</a> &#187;</li> 
+      </ul>
+    </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Stefan Behnel, Robert Bradshaw, Dag Sverre Seljebotn, Greg Ewing, William Stein, Gabriel Gellner, et al..
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-6139100-3");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+
+  </body>
+</html>
