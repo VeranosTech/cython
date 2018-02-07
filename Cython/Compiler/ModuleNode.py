@@ -28,7 +28,7 @@ from . import Pythran
 from .Errors import error, warning
 from .PyrexTypes import py_object_type
 from ..Utils import open_new_file, replace_suffix, decode_filename
-from .Code import UtilityCode
+from .Code import UtilityCode, IncludeCode
 from .StringEncoding import EncodedString
 from .Pythran import has_np_pythran
 
@@ -86,16 +86,15 @@ class ModuleNode(Nodes.Node, Nodes.BlockNode):
 
         self.scope.utility_code_list.extend(scope.utility_code_list)
 
+        for inc in scope.c_includes.values():
+            self.scope.process_include(inc)
+
         def extend_if_not_in(L1, L2):
             for x in L2:
                 if x not in L1:
                     L1.append(x)
 
-        extend_if_not_in(self.scope.include_files_early, scope.include_files_early)
-        extend_if_not_in(self.scope.include_files_late, scope.include_files_late)
         extend_if_not_in(self.scope.included_files, scope.included_files)
-        extend_if_not_in(self.scope.python_include_files,
-                         scope.python_include_files)
 
         if merge_scope:
             # Ensure that we don't generate import code for these entries!
@@ -621,8 +620,9 @@ class ModuleNode(Nodes.Node, Nodes.BlockNode):
             code.putln("")
         code.putln("#define PY_SSIZE_T_CLEAN")
 
-        for filename in env.python_include_files:
-            code.putln('#include "%s"' % filename)
+        for inc in sorted(env.c_includes.values(), key=IncludeCode.sortkey):
+            if inc.location == inc.INITIAL:
+                inc.write(code)
         code.putln("#ifndef Py_PYTHON_H")
         code.putln("    #error Python headers needed to compile C extensions, "
                    "please install development version of Python.")
@@ -739,19 +739,13 @@ class ModuleNode(Nodes.Node, Nodes.BlockNode):
 
     def generate_includes(self, env, cimported_modules, code, early=True, late=True):
         includes = []
-        if early:
-            includes += env.include_files_early
-        if late:
-            includes += [include for include in env.include_files_late
-                         if include not in env.include_files_early]
-        for filename in includes:
-            byte_decoded_filenname = str(filename)
-
-            if byte_decoded_filenname[0] == '<' and byte_decoded_filenname[-1] == '>':
-                code.putln('#include %s' % byte_decoded_filenname)
-            else:
-                code.putln('#include "%s"' % byte_decoded_filenname)
-
+        for inc in sorted(env.c_includes.values(), key=IncludeCode.sortkey):
+            if inc.location == inc.EARLY:
+                if early:
+                    inc.write(code)
+            elif inc.location == inc.LATE:
+                if late:
+                    inc.write(code)
         if early:
             code.putln_openmp("#include <omp.h>")
 
@@ -1886,16 +1880,19 @@ class ModuleNode(Nodes.Node, Nodes.BlockNode):
         # If that raises an AttributeError, call the __getattr__ if defined.
         #
         # In both cases, defined can be in this class, or any base class.
-        def lookup_here_or_base(n, type=None):
+        def lookup_here_or_base(n, tp=None, extern_return=None):
             # Recursive lookup
-            if type is None:
-                type = scope.parent_type
-            r = type.scope.lookup_here(n)
-            if r is None and \
-               type.base_type is not None:
-                return lookup_here_or_base(n, type.base_type)
-            else:
-                return r
+            if tp is None:
+                tp = scope.parent_type
+            r = tp.scope.lookup_here(n)
+            if r is None:
+                if tp.is_external and extern_return is not None:
+                    return extern_return
+                if tp.base_type is not None:
+                    return lookup_here_or_base(n, tp.base_type)
+            return r
+
+        has_instance_dict = lookup_here_or_base("__dict__", extern_return="extern")
         getattr_entry = lookup_here_or_base("__getattr__")
         getattribute_entry = lookup_here_or_base("__getattribute__")
         code.putln("")
@@ -1907,8 +1904,20 @@ class ModuleNode(Nodes.Node, Nodes.BlockNode):
                 "PyObject *v = %s(o, n);" % (
                     getattribute_entry.func_cname))
         else:
+            if not has_instance_dict and scope.parent_type.is_final_type:
+                # Final with no dict => use faster type attribute lookup.
+                code.globalstate.use_utility_code(
+                    UtilityCode.load_cached("PyObject_GenericGetAttrNoDict", "ObjectHandling.c"))
+                generic_getattr_cfunc = "__Pyx_PyObject_GenericGetAttrNoDict"
+            elif not has_instance_dict or has_instance_dict == "extern":
+                # No dict in the known ancestors, but don't know about extern ancestors or subtypes.
+                code.globalstate.use_utility_code(
+                    UtilityCode.load_cached("PyObject_GenericGetAttr", "ObjectHandling.c"))
+                generic_getattr_cfunc = "__Pyx_PyObject_GenericGetAttr"
+            else:
+                generic_getattr_cfunc = "PyObject_GenericGetAttr"
             code.putln(
-                "PyObject *v = PyObject_GenericGetAttr(o, n);")
+                "PyObject *v = %s(o, n);" % generic_getattr_cfunc)
         if getattr_entry is not None:
             code.putln(
                 "if (!v && PyErr_ExceptionMatches(PyExc_AttributeError)) {")
@@ -2318,15 +2327,8 @@ class ModuleNode(Nodes.Node, Nodes.BlockNode):
             tempdecl_code.put_trace_declarations()
             code.put_trace_frame_init()
 
-        code.putln("#if CYTHON_REFNANNY")
-        code.putln("__Pyx_RefNanny = __Pyx_RefNannyImportAPI(\"refnanny\");")
-        code.putln("if (!__Pyx_RefNanny) {")
-        code.putln("  PyErr_Clear();")
-        code.putln("  __Pyx_RefNanny = __Pyx_RefNannyImportAPI(\"Cython.Runtime.refnanny\");")
-        code.putln("  if (!__Pyx_RefNanny)")
-        code.putln("      Py_FatalError(\"failed to import 'refnanny' module\");")
-        code.putln("}")
-        code.putln("#endif")
+        refnanny_import_code = UtilityCode.load_as_string("ImportRefnannyAPI", "ModuleSetupCode.c")[1]
+        code.putln(refnanny_import_code.rstrip())
         code.put_setup_refcount_context(header3)
 
         env.use_utility_code(UtilityCode.load("CheckBinaryVersion", "ModuleSetupCode.c"))

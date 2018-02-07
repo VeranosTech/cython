@@ -2710,6 +2710,7 @@ special_basic_c_types = cython.declare(dict, {
     "ssize_t"    : (2, 0),
     "size_t"     : (0, 0),
     "ptrdiff_t"  : (2, 0),
+    "Py_tss_t"   : (1, 0),
 })
 
 sign_and_longness_words = cython.declare(
@@ -3081,9 +3082,13 @@ def p_cdef_extern_block(s, pos, ctx):
         ctx.namespace = p_string_literal(s, 'u')[2]
     if p_nogil(s):
         ctx.nogil = 1
-    body = p_suite(s, ctx)
+
+    # Use "docstring" as verbatim string to include
+    verbatim_include, body = p_suite_with_docstring(s, ctx, True)
+
     return Nodes.CDefExternNode(pos,
         include_file = include_file,
+        verbatim_include = verbatim_include,
         body = body,
         namespace = ctx.namespace)
 
