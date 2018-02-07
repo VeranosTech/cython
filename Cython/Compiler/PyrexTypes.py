@@ -192,7 +192,8 @@ class PyrexType(BaseType):
     #  is_pythran_expr       boolean     Is Pythran expr
     #  is_numpy_buffer       boolean     Is Numpy array buffer
     #  has_attributes        boolean     Has C dot-selectable attributes
-    #  default_value         string      Initial value
+    #  default_value         string      Initial value that can be assigned before first user assignment.
+    #  declaration_value     string      The value statically assigned on declaration (if any).
     #  entry                 Entry       The Entry for this type
     #
     #  declaration_code(entity_code,
@@ -254,6 +255,7 @@ class PyrexType(BaseType):
     is_numpy_buffer = 0
     has_attributes = 0
     default_value = ""
+    declaration_value = ""
 
     def resolve(self):
         # If a typedef, returns the base type.
@@ -1083,6 +1085,7 @@ class PyObjectType(PyrexType):
     name = "object"
     is_pyobject = 1
     default_value = "0"
+    declaration_value = "0"
     buffer_defaults = None
     is_extern = False
     is_subclassed = False
@@ -1730,20 +1733,36 @@ class ForbidUseClass:
 ForbidUse = ForbidUseClass()
 
 
-class CIntType(CNumericType):
-
-    is_int = 1
-    typedef_flag = 0
+class CIntLike(object):
+    """Mixin for shared behaviour of C integers and enums.
+    """
     to_py_function = None
     from_py_function = None
     to_pyunicode_utility = None
     default_format_spec = 'd'
-    exception_value = -1
 
     def can_coerce_to_pyobject(self, env):
         return True
 
     def can_coerce_from_pyobject(self, env):
+        return True
+
+    def create_to_py_utility_code(self, env):
+        if type(self).to_py_function is None:
+            self.to_py_function = "__Pyx_PyInt_From_" + self.specialization_name()
+            env.use_utility_code(TempitaUtilityCode.load_cached(
+                "CIntToPy", "TypeConversion.c",
+                context={"TYPE": self.empty_declaration_code(),
+                         "TO_PY_FUNCTION": self.to_py_function}))
+        return True
+
+    def create_from_py_utility_code(self, env):
+        if type(self).from_py_function is None:
+            self.from_py_function = "__Pyx_PyInt_As_" + self.specialization_name()
+            env.use_utility_code(TempitaUtilityCode.load_cached(
+                "CIntFromPy", "TypeConversion.c",
+                context={"TYPE": self.empty_declaration_code(),
+                         "FROM_PY_FUNCTION": self.from_py_function}))
         return True
 
     @staticmethod
@@ -1788,23 +1807,12 @@ class CIntType(CNumericType):
         format_type, width, padding_char = self._parse_format(format_spec)
         return "%s(%s, %d, '%s', '%s')" % (utility_code_name, cvalue, width, padding_char, format_type)
 
-    def create_to_py_utility_code(self, env):
-        if type(self).to_py_function is None:
-            self.to_py_function = "__Pyx_PyInt_From_" + self.specialization_name()
-            env.use_utility_code(TempitaUtilityCode.load_cached(
-                "CIntToPy", "TypeConversion.c",
-                context={"TYPE": self.empty_declaration_code(),
-                         "TO_PY_FUNCTION": self.to_py_function}))
-        return True
 
-    def create_from_py_utility_code(self, env):
-        if type(self).from_py_function is None:
-            self.from_py_function = "__Pyx_PyInt_As_" + self.specialization_name()
-            env.use_utility_code(TempitaUtilityCode.load_cached(
-                "CIntFromPy", "TypeConversion.c",
-                context={"TYPE": self.empty_declaration_code(),
-                         "FROM_PY_FUNCTION": self.from_py_function}))
-        return True
+class CIntType(CIntLike, CNumericType):
+
+    is_int = 1
+    typedef_flag = 0
+    exception_value = -1
 
     def get_to_py_type_conversion(self):
         if self.rank < list(rank_to_type_name).index('int'):
@@ -2219,6 +2227,25 @@ complex_ops = {
     (2, '**'): 'pow',
     (2, '=='): 'eq',
 }
+
+
+class CPyTSSTType(CType):
+    #
+    #   PEP-539 "Py_tss_t" type
+    #
+
+    declaration_value = "Py_tss_NEEDS_INIT"
+
+    def __repr__(self):
+        return "<Py_tss_t>"
+
+    def declaration_code(self, entity_code,
+                         for_display=0, dll_linkage=None, pyrex=0):
+        if pyrex or for_display:
+            base_code = "Py_tss_t"
+        else:
+            base_code = public_decl("Py_tss_t", dll_linkage)
+        return self.base_declaration_code(base_code, entity_code)
 
 
 class CPointerBaseType(CType):
@@ -3804,7 +3831,7 @@ def is_optional_template_param(type):
     return isinstance(type, TemplatePlaceholderType) and type.optional
 
 
-class CEnumType(CType):
+class CEnumType(CIntLike, CType):
     #  name           string
     #  cname          string or None
     #  typedef_flag   boolean
@@ -3851,28 +3878,6 @@ class CEnumType(CType):
                 return CEnumType(
                     self.name, self.cname, self.typedef_flag, namespace)
         return self
-
-    def can_coerce_to_pyobject(self, env):
-        return True
-
-    def can_coerce_from_pyobject(self, env):
-        return True
-
-    def create_to_py_utility_code(self, env):
-        self.to_py_function = "__Pyx_PyInt_From_" + self.specialization_name()
-        env.use_utility_code(TempitaUtilityCode.load_cached(
-            "CIntToPy", "TypeConversion.c",
-            context={"TYPE": self.empty_declaration_code(),
-                     "TO_PY_FUNCTION": self.to_py_function}))
-        return True
-
-    def create_from_py_utility_code(self, env):
-        self.from_py_function = "__Pyx_PyInt_As_" + self.specialization_name()
-        env.use_utility_code(TempitaUtilityCode.load_cached(
-            "CIntFromPy", "TypeConversion.c",
-            context={"TYPE": self.empty_declaration_code(),
-                     "FROM_PY_FUNCTION": self.from_py_function}))
-        return True
 
     def from_py_call_code(self, source_code, result_code, error_pos, code,
                           from_py_function=None, error_condition=None):
@@ -4105,6 +4110,9 @@ c_gilstate_type = CEnumType("PyGILState_STATE", "PyGILState_STATE", True)
 c_threadstate_type = CStructOrUnionType("PyThreadState", "struct", None, 1, "PyThreadState")
 c_threadstate_ptr_type = CPtrType(c_threadstate_type)
 
+# PEP-539 "Py_tss_t" type
+c_pytss_t_type = CPyTSSTType()
+
 # the Py_buffer type is defined in Builtin.py
 c_py_buffer_type = CStructOrUnionType("Py_buffer", "struct", None, 1, "Py_buffer")
 c_py_buffer_ptr_type = CPtrType(c_py_buffer_type)
@@ -4170,6 +4178,7 @@ modifiers_and_name_to_type = {
 
     #
     (1,  0, "void"): c_void_type,
+    (1,  0, "Py_tss_t"): c_pytss_t_type,
 
     (1,  0, "bint"):       c_bint_type,
     (0,  0, "Py_UNICODE"): c_py_unicode_type,

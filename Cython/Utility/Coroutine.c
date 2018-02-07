@@ -1234,13 +1234,6 @@ static void __Pyx_Coroutine_del(PyObject *self) {
 }
 
 static PyObject *
-__Pyx_Coroutine_get_frame(__pyx_CoroutineObject *self)
-{
-    // Fake implementation that always returns None, but at least does not raise an AttributeError.
-    Py_RETURN_NONE;
-}
-
-static PyObject *
 __Pyx_Coroutine_get_name(__pyx_CoroutineObject *self)
 {
     PyObject *name = self->gi_name;
@@ -1342,6 +1335,7 @@ static __pyx_CoroutineObject *__Pyx__Coroutine_NewInit(
 //////////////////// Coroutine ////////////////////
 //@requires: CoroutineBase
 //@requires: PatchGeneratorABC
+//@requires: ObjectHandling.c::PyObject_GenericGetAttrNoDict
 
 static void __Pyx_CoroutineAwait_dealloc(PyObject *self) {
     PyObject_GC_UnTrack(self);
@@ -1471,6 +1465,13 @@ static PyObject *__Pyx_Coroutine_await(PyObject *coroutine) {
     return __Pyx__Coroutine_await(coroutine);
 }
 
+static PyObject *
+__Pyx_Coroutine_get_frame(CYTHON_UNUSED __pyx_CoroutineObject *self)
+{
+    // Fake implementation that always returns None, but at least does not raise an AttributeError.
+    Py_RETURN_NONE;
+}
+
 #if CYTHON_COMPILING_IN_CPYTHON && PY_MAJOR_VERSION >= 3 && PY_VERSION_HEX < 0x030500B1
 static PyObject *__Pyx_Coroutine_compare(PyObject *obj, PyObject *other, int op) {
     PyObject* result;
@@ -1597,10 +1598,10 @@ static PyTypeObject __pyx_CoroutineType_type = {
 
 static int __pyx_Coroutine_init(void) {
     // on Windows, C-API functions can't be used in slots statically
-    __pyx_CoroutineType_type.tp_getattro = PyObject_GenericGetAttr;
+    __pyx_CoroutineType_type.tp_getattro = __Pyx_PyObject_GenericGetAttrNoDict;
 
 #ifdef __Pyx_IterableCoroutine_USED
-    __pyx_IterableCoroutineType_type.tp_getattro = PyObject_GenericGetAttr;
+    __pyx_IterableCoroutineType_type.tp_getattro = __Pyx_PyObject_GenericGetAttrNoDict;
     __pyx_IterableCoroutineType = __Pyx_FetchCommonType(&__pyx_IterableCoroutineType_type);
     if (unlikely(!__pyx_IterableCoroutineType))
         return -1;
@@ -1705,6 +1706,7 @@ static PyTypeObject __pyx_IterableCoroutineType_type = {
 //////////////////// Generator ////////////////////
 //@requires: CoroutineBase
 //@requires: PatchGeneratorABC
+//@requires: ObjectHandling.c::PyObject_GenericGetAttrNoDict
 
 static PyMethodDef __pyx_Generator_methods[] = {
     {"send", (PyCFunction) __Pyx_Coroutine_Send, METH_O,
@@ -1793,7 +1795,7 @@ static PyTypeObject __pyx_GeneratorType_type = {
 
 static int __pyx_Generator_init(void) {
     // on Windows, C-API functions can't be used in slots statically
-    __pyx_GeneratorType_type.tp_getattro = PyObject_GenericGetAttr;
+    __pyx_GeneratorType_type.tp_getattro = __Pyx_PyObject_GenericGetAttrNoDict;
     __pyx_GeneratorType_type.tp_iter = PyObject_SelfIter;
 
     __pyx_GeneratorType = __Pyx_FetchCommonType(&__pyx_GeneratorType_type);

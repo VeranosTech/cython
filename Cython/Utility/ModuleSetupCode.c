@@ -383,14 +383,18 @@ class __Pyx_FakeReference {
   #define Py_TPFLAGS_HAVE_FINALIZE 0
 #endif
 
-#if PY_VERSION_HEX < 0x030700A0 || !defined(METH_FASTCALL)
-  // new in CPython 3.6, but changed in 3.7 - see https://bugs.python.org/issue29464
+#if PY_VERSION_HEX <= 0x030700A3 || !defined(METH_FASTCALL)
+  // new in CPython 3.6, but changed in 3.7 - see
+  // positional-only parameters:
+  //   https://bugs.python.org/issue29464
+  // const args:
+  //   https://bugs.python.org/issue32240
   #ifndef METH_FASTCALL
      #define METH_FASTCALL 0x80
   #endif
-  typedef PyObject *(*__Pyx_PyCFunctionFast) (PyObject *self, PyObject **args, Py_ssize_t nargs);
+  typedef PyObject *(*__Pyx_PyCFunctionFast) (PyObject *self, PyObject *const *args, Py_ssize_t nargs);
   // new in CPython 3.7, used to be old signature of _PyCFunctionFast() in 3.6
-  typedef PyObject *(*__Pyx_PyCFunctionFastWithKeywords) (PyObject *self, PyObject **args,
+  typedef PyObject *(*__Pyx_PyCFunctionFastWithKeywords) (PyObject *self, PyObject *const *args,
                                                           Py_ssize_t nargs, PyObject *kwnames);
 #else
   #define __Pyx_PyCFunctionFast _PyCFunctionFast
@@ -566,6 +570,13 @@ static CYTHON_INLINE void * PyThread_tss_get(Py_tss_t *key) {
 
 #ifndef PySet_CheckExact
   #define PySet_CheckExact(obj)        (Py_TYPE(obj) == &PySet_Type)
+#endif
+
+#if CYTHON_ASSUME_SAFE_MACROS
+  #define __Pyx_PySequence_SIZE(seq)  Py_SIZE(seq)
+#else
+  // NOTE: might fail with exception => check for -1
+  #define __Pyx_PySequence_SIZE(seq)  PySequence_Size(seq)
 #endif
 
 #if PY_MAJOR_VERSION >= 3
@@ -1095,6 +1106,20 @@ end:
     return (__Pyx_RefNannyAPIStruct *)r;
 }
 #endif /* CYTHON_REFNANNY */
+
+
+/////////////// ImportRefnannyAPI ///////////////
+
+#if CYTHON_REFNANNY
+__Pyx_RefNanny = __Pyx_RefNannyImportAPI("refnanny");
+if (!__Pyx_RefNanny) {
+  PyErr_Clear();
+  __Pyx_RefNanny = __Pyx_RefNannyImportAPI("Cython.Runtime.refnanny");
+  if (!__Pyx_RefNanny)
+      Py_FatalError("failed to import 'refnanny' module");
+}
+#endif
+
 
 /////////////// RegisterModuleCleanup.proto ///////////////
 //@substitute: naming

@@ -2,7 +2,7 @@
 Cython Changelog
 ================
 
-0.28 (2017-??-??)
+0.28 (2018-??-??)
 =================
 
 Features added
@@ -27,19 +27,48 @@ Features added
 * The new TSS C-API in CPython 3.7 is supported and has been backported.
   Patch by Naotoshi Seo.  (Github issue #1932)
 
+* Cython knows the new ``Py_tss_t`` type defined in PEP-539 and automatically
+  initialises variables declared with that type to ``Py_tss_NEEDS_INIT``,
+  a value which cannot be used outside of static assignments.
+
+* The set methods ``.remove()`` and ``.discard()`` are optimised.
+  Patch by Antoine Pitrou.  (Github issue #2042)
+
+* ``dict.pop()`` is optimised.
+  Original patch by Antoine Pitrou.  (Github issue #2047)
+
+* Iteration over sets and frozensets is optimised.
+  (Github issue #2048)
+
+* Safe integer loops (< range(2^30)) are automatically optimised into C loops.
+
+* ``alist.extend([a,b,c])`` is optimised into sequential ``list.append()`` calls
+  for short literal sequences.
+
+* Calls to builtin methods that are not specifically optimised into C-API calls
+  now use a cache that avoids repeated lookups of the underlying C function.
+  (Github issue #2054)
+
+* Single argument function calls can avoid the argument tuple creation in some cases.
+
+* Formatting C enum values in f-strings is faster, as well as some other special cases.
+
 * Subscripting (item access) is faster in some cases.
 
 * Some ``bytearray`` operations have been optimised similar to ``bytes``.
 
-* Safe integer loops (< range(2^30)) are optimised into C loops.
-
 * Some PEP-484/526 container type declarations are now considered for
   loop optimisations.
+
+* Indexing into memoryview slices with ``view[i][j]`` is now optimised into
+  ``view[i, j]``.
 
 * Python compatible ``cython.*`` types can now be mixed with type declarations
   in Cython syntax.
 
 * Name lookups in the module and in classes are faster.
+
+* Python attribute lookups on extension types without instance dict are faster.
 
 * Some missing signals were added to ``libc/signal.pxd``.
   Patch by Jeroen Demeyer.  (Github issue #1914)
@@ -56,9 +85,28 @@ Features added
 Bugs fixed
 ----------
 
+* If a module name is explicitly provided for an ``Extension()`` that is compiled
+  via ``cythonize()``, it was previously ignored and replaced by the source file
+  name.  It can now be used to override the target module name, e.g. for compiling
+  prefixed accelerator modules from Python files.  (Github issue #2038)
+
+* The arguments of the ``num_threads`` parameter of parallel sections
+  were not sufficiently validated and could lead to invalid C code.
+  (Github issue #1957)
+
 * Catching exceptions with a non-trivial exception pattern could call into
   CPython with a live exception set.  This triggered incorrect behaviour
   and crashes, especially in CPython 3.7.
+
+* The signature of the special ``__richcmp__()`` method was corrected to recognise
+  the type of the first argument as ``self``.  It was previously treated as plain
+  object, but CPython actually guarantees that it always has the correct type.
+
+* Some Python 3 exceptions were not recognised as builtins when running Cython
+  under Python 2.
+
+* Some async helper functions were not defined in the generated C code when
+  compiling simple async code.  (Github issue #2075)
 
 * Line tracing did not include generators and coroutines.
   (Github issue #1949)
@@ -68,6 +116,12 @@ Bugs fixed
 
 * Iterator declarations in C++ ``deque`` and ``vector`` were corrected.
   Patch by Alex Huszagh.  (Github issue #1870)
+
+* Some declaration types in ``libc.limits`` were corrected.
+  Patch by Jeroen Demeyer.  (Github issue #2016)
+
+* ``@cython.final`` was not accepted on Python classes with an ``@cython.cclass``
+  decorator.  (Github issue #2040)
 
 Other changes
 -------------
@@ -490,7 +544,8 @@ Features added
 * The new METH_FASTCALL calling convention for PyCFunctions is supported
   in CPython 3.6.  See https://bugs.python.org/issue27810
 
-* Initial support for using Cython modules in Pyston.  Patch by Daetalus.
+* Initial support for using Cython modules in Pyston.
+  Patch by Boxiang Sun.
 
 * Dynamic Python attributes are allowed on cdef classes if an attribute
   ``cdef dict __dict__`` is declared in the class.  Patch by empyrical.

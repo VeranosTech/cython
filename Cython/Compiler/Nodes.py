@@ -470,8 +470,9 @@ class StatNode(Node):
 
 
 class CDefExternNode(StatNode):
-    #  include_file   string or None
-    #  body           StatListNode
+    #  include_file       string or None
+    #  verbatim_include   string or None
+    #  body               StatListNode
 
     child_attrs = ["body"]
 
@@ -480,18 +481,16 @@ class CDefExternNode(StatNode):
         env.in_cinclude = 1
         self.body.analyse_declarations(env)
         env.in_cinclude = old_cinclude_flag
-        inc = self.include_file
-        if inc:
+
+        if self.include_file or self.verbatim_include:
+            # Determine whether include should be late
             stats = self.body.stats
-            if inc[0] == '<' and inc[-1] == '>':
-                # System include => always early
-                env.add_include_file(inc)
-            elif stats and all(isinstance(node, CVarDefNode) for node in stats):
-                # Generate a late include if the body is not empty and
-                # all statements are variable or function declarations.
-                env.add_include_file(inc, late=True)
+            if not stats:
+                # Special case: empty 'cdef extern' blocks are early
+                late = False
             else:
-                env.add_include_file(inc)
+                late = all(isinstance(node, CVarDefNode) for node in stats)
+            env.add_include_file(self.include_file, self.verbatim_include, late)
 
     def analyse_expressions(self, env):
         return self
@@ -3191,7 +3190,10 @@ class DefNode(FuncDefNode):
             arg_code_list.append(arg_decl_code(self.star_arg))
         if self.starstar_arg:
             arg_code_list.append(arg_decl_code(self.starstar_arg))
-        arg_code = ', '.join(arg_code_list)
+        if arg_code_list:
+            arg_code = ', '.join(arg_code_list)
+        else:
+            arg_code = 'void'  # No arguments
         dc = self.return_type.declaration_code(self.entry.pyfunc_cname)
 
         decls_code = code.globalstate['decls']
@@ -3863,11 +3865,11 @@ class DefNodeWrapper(FuncDefNode):
                 code.putln('switch (pos_args) {')
             for i, arg in enumerate(all_args[:last_required_arg+1]):
                 if max_positional_args > 0 and i <= max_positional_args:
+                    if i != 0:
+                        code.putln('CYTHON_FALLTHROUGH;')
                     if self.star_arg and i == max_positional_args:
                         code.putln('default:')
                     else:
-                        if i != 0:
-                            code.putln('CYTHON_FALLTHROUGH;')
                         code.putln('case %2d:' % i)
                 pystring_cname = code.intern_identifier(arg.name)
                 if arg.default:
@@ -4233,6 +4235,9 @@ class GeneratorBodyDefNode(DefNode):
         # on normal generator termination, we do not take the exception propagation
         # path: no traceback info is required and not creating it is much faster
         if not self.is_inlined and not self.body.is_terminator:
+            if self.is_async_gen_body:
+                code.globalstate.use_utility_code(
+                    UtilityCode.load_cached("StopAsyncIteration", "Coroutine.c"))
             code.putln('PyErr_SetNone(%s);' % (
                 '__Pyx_PyExc_StopAsyncIteration' if self.is_async_gen_body else 'PyExc_StopIteration'))
         # ----- Error cleanup
@@ -4737,14 +4742,11 @@ class CClassDefNode(ClassDefNode):
         if len(self.bases.args) > 1:
             if not has_body or self.in_pxd:
                 error(self.bases.args[1].pos, "Only declare first base in declaration.")
+            # At runtime, we check that the other bases are heap types
+            # and that a __dict__ is added if required.
             for other_base in self.bases.args[1:]:
                 if other_base.analyse_as_type(env):
-                    # TODO(robertwb): We may also want to enforce some checks
-                    # at runtime.
                     error(other_base.pos, "Only one extension type base class allowed.")
-            if not self.scope.lookup("__dict__"):
-                #TODO(robertwb): See if this can be safely removed.
-                error(self.pos, "Extension types with multiple bases must have a __dict__ attribute")
             self.entry.type.early_init = 0
             from . import ExprNodes
             self.type_init_args = ExprNodes.TupleNode(
@@ -4825,27 +4827,39 @@ class CClassDefNode(ClassDefNode):
             for slot in TypeSlots.slot_table:
                 slot.generate_dynamic_init_code(scope, code)
             if heap_type_bases:
-
-                # As of https://bugs.python.org/issue22079
-                # PyType_Ready enforces that all bases of a non-heap type
-                # are non-heap.  We know this is the case for the solid base,
-                # but other bases may be heap allocated and are kept alive
-                # though the bases reference.
-                # Other than this check, this flag is unused in this method.
-                code.putln("#if PY_VERSION_HEX >= 0x03050000")
-                code.putln("%s.tp_flags |= Py_TPFLAGS_HEAPTYPE;" % typeobj_cname)
-                code.putln("#endif")
+                code.globalstate.use_utility_code(
+                    UtilityCode.load_cached('PyType_Ready', 'ExtensionTypes.c'))
+                readyfunc = "__Pyx_PyType_Ready"
+            else:
+                readyfunc = "PyType_Ready"
             code.putln(
-                "if (PyType_Ready(&%s) < 0) %s" % (
+                "if (%s(&%s) < 0) %s" % (
+                    readyfunc,
                     typeobj_cname,
                     code.error_goto(entry.pos)))
-            if heap_type_bases:
-                code.putln("#if PY_VERSION_HEX >= 0x03050000")
-                code.putln("%s.tp_flags &= ~Py_TPFLAGS_HEAPTYPE;" % typeobj_cname)
-                code.putln("#endif")
             # Don't inherit tp_print from builtin types, restoring the
             # behavior of using tp_repr or tp_str instead.
             code.putln("%s.tp_print = 0;" % typeobj_cname)
+
+            # Use specialised attribute lookup for types with generic lookup but no instance dict.
+            getattr_slot_func = TypeSlots.get_slot_code_by_name(scope, 'tp_getattro')
+            dictoffset_slot_func = TypeSlots.get_slot_code_by_name(scope, 'tp_dictoffset')
+            if getattr_slot_func == '0' and dictoffset_slot_func == '0':
+                if type.is_final_type:
+                    py_cfunc = "__Pyx_PyObject_GenericGetAttrNoDict"  # grepable
+                    utility_func = "PyObject_GenericGetAttrNoDict"
+                else:
+                    py_cfunc = "__Pyx_PyObject_GenericGetAttr"
+                    utility_func = "PyObject_GenericGetAttr"
+                code.globalstate.use_utility_code(UtilityCode.load_cached(utility_func, "ObjectHandling.c"))
+
+                code.putln("if ((CYTHON_USE_TYPE_SLOTS && CYTHON_USE_PYTYPE_LOOKUP) &&"
+                           " likely(!%s.tp_dictoffset && %s.tp_getattro == PyObject_GenericGetAttr)) {" % (
+                    typeobj_cname, typeobj_cname))
+                code.putln("%s.tp_getattro = %s;" % (
+                    typeobj_cname, py_cfunc))
+                code.putln("}")
+
             # Fix special method docstrings. This is a bit of a hack, but
             # unless we let PyType_Ready create the slot wrappers we have
             # a significant performance hit. (See trac #561.)
@@ -4853,8 +4867,8 @@ class CClassDefNode(ClassDefNode):
                 is_buffer = func.name in ('__getbuffer__', '__releasebuffer__')
                 if (func.is_special and Options.docstrings and
                         func.wrapperbase_cname and not is_buffer):
-                    slot = TypeSlots.method_name_to_slot[func.name]
-                    preprocessor_guard = slot.preprocessor_guard_code()
+                    slot = TypeSlots.method_name_to_slot.get(func.name)
+                    preprocessor_guard = slot.preprocessor_guard_code() if slot else None
                     if preprocessor_guard:
                         code.putln(preprocessor_guard)
                     code.putln('#if CYTHON_COMPILING_IN_CPYTHON')
@@ -5041,6 +5055,8 @@ class ExprStatNode(StatNode):
     def analyse_expressions(self, env):
         self.expr.result_is_used = False  # hint that .result() may safely be left empty
         self.expr = self.expr.analyse_expressions(env)
+        # Repeat in case of node replacement.
+        self.expr.result_is_used = False  # hint that .result() may safely be left empty
         return self
 
     def nogil_check(self, env):
@@ -5051,9 +5067,13 @@ class ExprStatNode(StatNode):
 
     def generate_execution_code(self, code):
         code.mark_pos(self.pos)
+        self.expr.result_is_used = False  # hint that .result() may safely be left empty
         self.expr.generate_evaluation_code(code)
         if not self.expr.is_temp and self.expr.result():
-            code.putln("%s;" % self.expr.result())
+            result = self.expr.result()
+            if not self.expr.type.is_void:
+                result = "(void)(%s)" % result
+            code.putln("%s;" % result)
         self.expr.generate_disposal_code(code)
         self.expr.free_temps(code)
 
@@ -5879,19 +5899,23 @@ class ReturnStatNode(StatNode):
         if not self.return_type:
             # error reported earlier
             return
-        if self.return_type.is_pyobject:
-            code.put_xdecref(Naming.retval_cname,
-                             self.return_type)
 
-        if self.value:
-            self.value.generate_evaluation_code(code)
+        value = self.value
+        if self.return_type.is_pyobject:
+            code.put_xdecref(Naming.retval_cname, self.return_type)
+            if value and value.is_none:
+                # Use specialised default handling for "return None".
+                value = None
+
+        if value:
+            value.generate_evaluation_code(code)
             if self.return_type.is_memoryviewslice:
                 from . import MemoryView
                 MemoryView.put_acquire_memoryviewslice(
                     lhs_cname=Naming.retval_cname,
                     lhs_type=self.return_type,
-                    lhs_pos=self.value.pos,
-                    rhs=self.value,
+                    lhs_pos=value.pos,
+                    rhs=value,
                     code=code,
                     have_gil=self.in_nogil_context)
             elif self.in_generator:
@@ -5900,19 +5924,21 @@ class ReturnStatNode(StatNode):
                     UtilityCode.load_cached("ReturnWithStopIteration", "Coroutine.c"))
                 code.putln("%s = NULL; __Pyx_ReturnWithStopIteration(%s);" % (
                     Naming.retval_cname,
-                    self.value.py_result()))
-                self.value.generate_disposal_code(code)
+                    value.py_result()))
+                value.generate_disposal_code(code)
             else:
-                self.value.make_owned_reference(code)
+                value.make_owned_reference(code)
                 code.putln("%s = %s;" % (
                     Naming.retval_cname,
-                    self.value.result_as(self.return_type)))
-            self.value.generate_post_assignment_code(code)
-            self.value.free_temps(code)
+                    value.result_as(self.return_type)))
+            value.generate_post_assignment_code(code)
+            value.free_temps(code)
         else:
             if self.return_type.is_pyobject:
                 if self.in_generator:
                     if self.in_async_gen:
+                        code.globalstate.use_utility_code(
+                            UtilityCode.load_cached("StopAsyncIteration", "Coroutine.c"))
                         code.put("PyErr_SetNone(__Pyx_PyExc_StopAsyncIteration); ")
                     code.putln("%s = NULL;" % Naming.retval_cname)
                 else:
@@ -6442,6 +6468,66 @@ class DictIterationNextNode(Node):
         for var, result, target in assignments:
             target.generate_assignment_code(result, code)
             var.release(code)
+
+
+class SetIterationNextNode(Node):
+    # Helper node for calling _PySet_NextEntry() inside of a WhileStatNode
+    # and checking the set size for changes.  Created in Optimize.py.
+    child_attrs = ['set_obj', 'expected_size', 'pos_index_var',
+                   'coerced_value_var', 'value_target', 'is_set_flag']
+
+    coerced_value_var = value_ref = None
+
+    def __init__(self, set_obj, expected_size, pos_index_var, value_target, is_set_flag):
+        Node.__init__(
+            self, set_obj.pos,
+            set_obj=set_obj,
+            expected_size=expected_size,
+            pos_index_var=pos_index_var,
+            value_target=value_target,
+            is_set_flag=is_set_flag,
+            is_temp=True,
+            type=PyrexTypes.c_bint_type)
+
+    def analyse_expressions(self, env):
+        from . import ExprNodes
+        self.set_obj = self.set_obj.analyse_types(env)
+        self.expected_size = self.expected_size.analyse_types(env)
+        self.pos_index_var = self.pos_index_var.analyse_types(env)
+        self.value_target = self.value_target.analyse_target_types(env)
+        self.value_ref = ExprNodes.TempNode(self.value_target.pos, type=PyrexTypes.py_object_type)
+        self.coerced_value_var = self.value_ref.coerce_to(self.value_target.type, env)
+        self.is_set_flag = self.is_set_flag.analyse_types(env)
+        return self
+
+    def generate_function_definitions(self, env, code):
+        self.set_obj.generate_function_definitions(env, code)
+
+    def generate_execution_code(self, code):
+        code.globalstate.use_utility_code(UtilityCode.load_cached("set_iter", "Optimize.c"))
+        self.set_obj.generate_evaluation_code(code)
+
+        value_ref = self.value_ref
+        value_ref.allocate(code)
+
+        result_temp = code.funcstate.allocate_temp(PyrexTypes.c_int_type, False)
+        code.putln("%s = __Pyx_set_iter_next(%s, %s, &%s, &%s, %s);" % (
+            result_temp,
+            self.set_obj.py_result(),
+            self.expected_size.result(),
+            self.pos_index_var.result(),
+            value_ref.result(),
+            self.is_set_flag.result()
+        ))
+        code.putln("if (unlikely(%s == 0)) break;" % result_temp)
+        code.putln(code.error_goto_if("%s == -1" % result_temp, self.pos))
+        code.funcstate.release_temp(result_temp)
+
+        # evaluate all coercions before the assignments
+        code.put_gotref(value_ref.result())
+        self.coerced_value_var.generate_evaluation_code(code)
+        self.value_target.generate_assignment_code(self.coerced_value_var, code)
+        value_ref.release(code)
 
 
 def ForStatNode(pos, **kw):
@@ -8017,11 +8103,17 @@ class ParallelStatNode(StatNode, ParallelNode):
         if self.kwargs:
             # Try to find num_threads and chunksize keyword arguments
             pairs = []
+            seen = set()
             for dictitem in self.kwargs.key_value_pairs:
+                if dictitem.key.value in seen:
+                    error(self.pos, "Duplicate keyword argument found: %s" % dictitem.key.value)
+                seen.add(dictitem.key.value)
                 if dictitem.key.value == 'num_threads':
-                    self.num_threads = dictitem.value
+                    if not dictitem.value.is_none:
+                       self.num_threads = dictitem.value
                 elif self.is_prange and dictitem.key.value == 'chunksize':
-                    self.chunksize = dictitem.value
+                    if not dictitem.value.is_none:
+                        self.chunksize = dictitem.value
                 else:
                     pairs.append(dictitem)
 
@@ -8061,7 +8153,7 @@ class ParallelStatNode(StatNode, ParallelNode):
                     self.num_threads.compile_time_value(env) <= 0):
                 error(self.pos, "argument to num_threads must be greater than 0")
 
-            if not self.num_threads.is_simple():
+            if not self.num_threads.is_simple() or self.num_threads.type.is_pyobject:
                 self.num_threads = self.num_threads.coerce_to(
                     PyrexTypes.c_int_type, env).coerce_to_temp(env)
         return self
